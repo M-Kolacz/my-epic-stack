@@ -34,6 +34,7 @@ export default function Index() {
           <a target="_blank" href="https://remix.run/docs" rel="noreferrer">
             Remix Docs
           </a>
+          <button>Hello there my friends!</button>
         </li>
       </ul>
     </div>
