@@ -8,8 +8,19 @@ export const loader = async () => {
   return json({ users });
 };
 
+export const action = async () => {
+  await prisma.user.create({
+    data: {
+      email: "michal.kolacz46@gmail.com",
+    },
+  });
+
+  return json({ message: "User created" });
+};
+
 const UserRoute = () => {
   const data = useLoaderData<typeof loader>();
+
   return (
     <div>
       <h1>User Route</h1>
@@ -18,6 +29,9 @@ const UserRoute = () => {
           return <li key={user.id}>{user.email}</li>;
         })}
       </ul>
+      <form method="POST">
+        <button type="submit">Add new user</button>
+      </form>
     </div>
   );
 };

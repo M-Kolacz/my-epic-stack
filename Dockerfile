@@ -32,9 +32,9 @@ WORKDIR /app/
 COPY --from=deps /app/node_modules /app/node_modules
 
 # schema doesn't change much so these will stay cached
-# ADD prisma /app/prisma
+ADD prisma /app/prisma
 
-# RUN npx prisma generate
+RUN npx prisma generate
 
 # app code changes all the time
 ADD . .
@@ -51,7 +51,7 @@ RUN mkdir /app/
 WORKDIR /app/
 
 COPY --from=production-deps /app/node_modules /app/node_modules
-# COPY --from=build /app/node_modules/.prisma /app/node_modules/.prisma
+COPY --from=build /app/node_modules/.prisma /app/node_modules/.prisma
 COPY --from=build /app/build /app/build
 
 ADD . .
