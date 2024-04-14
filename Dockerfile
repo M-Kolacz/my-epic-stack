@@ -43,7 +43,7 @@ RUN npm run build
 # build smaller image for running
 FROM base
 
-ENV DATABASE_URL="file:/app/data/sqlite.db"
+ENV DATABASE_URL="file:/data/sqlite.db"
 ENV PORT="8080"
 ENV NODE_ENV="production"
 

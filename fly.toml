@@ -8,6 +8,10 @@ primary_region = 'waw'
 
 [build]
 
+[mounts]
+source = "data"
+destination = "/data"
+
 [[services]]
 internal_port = 8080
 processes = ["app"]
