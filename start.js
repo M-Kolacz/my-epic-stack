@@ -7,7 +7,7 @@ async function go() {
   await exec("npx prisma migrate deploy");
 
   console.log("Starting app...");
-  await exec("remix-serve ./build/server/index.js");
+  await exec("cross-env NODE_ENV=production node ./server.js");
 }
 go();
 
