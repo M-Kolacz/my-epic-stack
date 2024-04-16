@@ -1,5 +1,5 @@
 # base node image
-FROM node:18-bullseye-slim as base
+FROM node:20-bookworm-slim as base
 
 # install openssl and sqlite3 for prisma
 RUN apt-get update && apt-get install -y openssl sqlite3
