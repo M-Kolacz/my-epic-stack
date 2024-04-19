@@ -1,5 +1,5 @@
 import type { MetaFunction } from "@remix-run/node";
-import { Link } from "#app/components/ui/link";
+import { Link } from "#app/components/link";
 
 export const meta: MetaFunction = () => {
   return [
