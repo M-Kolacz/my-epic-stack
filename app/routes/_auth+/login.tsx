@@ -1,11 +1,10 @@
 import { Button } from "#app/components/ui/button";
-import { Input } from "#app/components/ui/input";
-import { Label } from "#app/components/ui/label";
 import { Form, useActionData } from "@remix-run/react";
 import { LoginSchema } from "#app/utils/schema";
 import { useForm, getFormProps, getInputProps } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod";
 import { ActionFunctionArgs, json, redirect } from "@remix-run/node";
+import { Field } from "#app/components/form";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
@@ -33,17 +32,23 @@ const LoginRoute = () => {
 
   return (
     <Form method="POST" {...getFormProps(form)}>
-      <Label id={fields.username.id}>Username</Label>
-      <Input
+      <Field
         {...getInputProps(fields.username, { type: "text" })}
-        autoFocus
+        errors={fields.username.errors}
+        errorId={fields.username.errorId}
+        label="Username"
         autoComplete="username"
+        autoFocus
       />
-      <Label id={fields.password.id}>Password</Label>
-      <Input
+
+      <Field
         {...getInputProps(fields.password, { type: "password" })}
+        errors={fields.password.errors}
+        errorId={fields.password.errorId}
+        label="Password"
         autoComplete="current-password"
       />
+
       <Button type="submit">Submit</Button>
     </Form>
   );
