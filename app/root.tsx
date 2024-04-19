@@ -28,7 +28,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        <h1 className="p-9 bg-purple-950">Hello there</h1>
         {children}
         <ScrollRestoration />
         <Scripts />
