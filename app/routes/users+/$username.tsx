@@ -1,10 +1,10 @@
-import { Link } from "@remix-run/react";
+import { Link } from "#app/components/ui/link";
 
 const UsernameRoute = () => {
   return (
     <div>
       <div>Hi I am Michau</div>
-      <Link to=".." relative="path" className="text-blue-950 underline">
+      <Link to=".." relative="path">
         Go back to users
       </Link>
     </div>

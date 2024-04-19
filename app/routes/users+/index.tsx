@@ -1,11 +1,11 @@
-import { Link } from "@remix-run/react";
+import { Link } from "#app/components/ui/link";
 
 const UsersIndexRoute = () => {
   return (
     <ul>
       <li>
-        <Link to="michau" relative="path" className="text-blue-950 underline">
-          Go to Michau
+        <Link to="michau" relative="path">
+          Go to michau
         </Link>
       </li>
     </ul>
