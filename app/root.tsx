@@ -1,5 +1,6 @@
 import { LinksFunction } from "@remix-run/node";
 import {
+  Link,
   Links,
   Meta,
   Outlet,
@@ -28,7 +29,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
+        <header className="bg-blue-500 p-4">
+          <Link to="/">My header</Link>
+        </header>
         {children}
+        <footer className="bg-blue-300 p-4">My footer</footer>
         <ScrollRestoration />
         <Scripts />
       </body>
