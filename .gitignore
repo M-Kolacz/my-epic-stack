@@ -7,3 +7,4 @@ node_modules
 server-build
 
 /prisma/sqlite.db
+/prisma/sqlite.db-journal
