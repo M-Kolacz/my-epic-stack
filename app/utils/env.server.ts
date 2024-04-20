@@ -1,7 +1,11 @@
+import { CSRF } from "remix-utils/csrf/server";
 import { z } from "zod";
 
 const schema = z.object({
   NODE_ENV: z.enum(["production", "development", "test"] as const),
+  CSRF_SECRET: z.string(),
+  CSRF_SIGN_SECTER: z.string(),
+  HONEYPOT_SECRET: z.string(),
 });
 
 declare global {
