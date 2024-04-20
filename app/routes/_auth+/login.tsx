@@ -6,10 +6,13 @@ import { getZodConstraint, parseWithZod } from "@conform-to/zod";
 import { ActionFunctionArgs, json, redirect } from "@remix-run/node";
 import { Field } from "#app/components/form";
 import { HoneypotInputs } from "remix-utils/honeypot/react";
-import { SpamError } from "remix-utils/honeypot/server";
-import { checkHoneypot, honeypot } from "#app/utils/honeypot.server";
+import { checkHoneypot } from "#app/utils/honeypot.server";
+import { AuthenticityTokenInput } from "remix-utils/csrf/react";
+import { checkCsrf } from "#app/utils/csrf.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
+  await checkCsrf(request);
+
   const formData = await request.formData();
   checkHoneypot(formData);
 
@@ -57,6 +60,7 @@ const LoginRoute = () => {
       <Button type="submit">Submit</Button>
 
       <HoneypotInputs />
+      <AuthenticityTokenInput />
     </Form>
   );
 };
