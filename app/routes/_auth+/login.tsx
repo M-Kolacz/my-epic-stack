@@ -9,12 +9,12 @@ import { HoneypotInputs } from "remix-utils/honeypot/react";
 import { checkHoneypot } from "#app/utils/honeypot.server";
 import { AuthenticityTokenInput } from "remix-utils/csrf/react";
 import { checkCsrf } from "#app/utils/csrf.server";
+import { getPath } from "#app/utils/server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   await checkCsrf(request);
-
   const formData = await request.formData();
-  checkHoneypot(formData);
+  checkHoneypot(formData, getPath(request));
 
   const submission = parseWithZod(formData, { schema: LoginSchema });
 
