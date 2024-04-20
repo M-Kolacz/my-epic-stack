@@ -12,19 +12,40 @@ const MODE = process.env.NODE_ENV ?? "development";
 const IS_PROD = MODE === "production";
 const IS_DEV = MODE === "development";
 
-const viteDevServer =
-  process.env.NODE_ENV === "production"
-    ? null
-    : await import("vite").then((vite) =>
-        vite.createServer({
-          server: { middlewareMode: true },
-        })
-      );
+const viteDevServer = IS_PROD
+  ? undefined
+  : await import("vite").then((vite) =>
+      vite.createServer({
+        server: { middlewareMode: true },
+      })
+    );
 
 const app = express();
-app.use(
-  viteDevServer ? viteDevServer.middlewares : express.static("build/client")
-);
+
+// no ending slashes for SEO reasons
+// https://github.com/epicweb-dev/epic-stack/discussions/108
+app.get("*", (req, res, next) => {
+  if (req.path.endsWith("/") && req.path.length > 1) {
+    const query = req.url.slice(req.path.length);
+    const safepath = req.path.slice(0, -1).replace(/\/+/g, "/");
+    res.redirect(301, safepath + query);
+  } else {
+    next();
+  }
+});
+
+if (viteDevServer) {
+  app.use(viteDevServer.middlewares);
+} else {
+  // Remix fingerprints its assets so we can cache forever.
+  app.use(
+    "/assets",
+    express.static("build/client/assets", { immutable: true, maxAge: "1y" })
+  );
+  // Everything else (like favicon.ico) is cached for an hour. You may want to be
+  // more aggressive with this caching.
+  app.use(express.static("build/client", { maxAge: "1h" }));
+}
 
 const getBuild = async () => {
   const build = viteDevServer
@@ -36,7 +57,17 @@ const getBuild = async () => {
   return build as unknown as ServerBuild;
 };
 
-app.all("*", createRequestHandler({ build: getBuild }));
+app.all(
+  "*",
+  createRequestHandler({
+    getLoadContext: (_: any, res: any) => ({
+      cspNonce: res.locals.cspNonce,
+      serverBuild: getBuild(),
+    }),
+    mode: MODE,
+    build: getBuild,
+  })
+);
 
 const desiredPort = Number(process.env.PORT || 3000);
 const portToUse = await getPort({
