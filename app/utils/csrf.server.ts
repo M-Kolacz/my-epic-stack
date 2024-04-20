@@ -7,12 +7,12 @@ export const csrfCookie = createCookie("csrf", {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
   sameSite: "lax",
-  secrets: ["secret1", "secret2"],
+  secrets: process.env.CSRF_SECRET.split(","),
 });
 
 export const csrf = new CSRF({
   cookie: csrfCookie,
-  secret: "another-secret",
+  secret: process.env.CSRF_SIGN_SECTER,
 });
 
 export const checkCsrf = async (request: Request) => {
@@ -21,7 +21,7 @@ export const checkCsrf = async (request: Request) => {
   } catch (error) {
     if (error instanceof CSRFError) {
       console.error("👮‍♂️ CSRF attack detected", getPath(request), error.message);
-      throw new Response("Form not submitted properly", { status: 400 });
+      throw new Response("Invalid CSRF token", { status: 403 });
     }
     throw error;
   }
