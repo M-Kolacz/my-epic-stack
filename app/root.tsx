@@ -53,6 +53,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
           {children}
         </main>
         <footer className="bg-blue-300 p-4">My footer</footer>
+
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.ENV = ${JSON.stringify(ENV)}`,
+          }}
+        />
         <ScrollRestoration />
         <Scripts />
       </body>
