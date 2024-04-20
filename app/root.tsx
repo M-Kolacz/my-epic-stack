@@ -1,13 +1,18 @@
-import { LinksFunction } from "@remix-run/node";
+import { LinksFunction, json } from "@remix-run/node";
 import {
   Links,
   Meta,
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
 } from "@remix-run/react";
-import { Link } from "#app/components/ui/link";
+import { Link } from "#app/components/link";
 import tailwindStyleSheetUrl from "./styles/tailwind.css?url";
+import { honeypot } from "./utils/honeypot.server";
+import { HoneypotProvider } from "remix-utils/honeypot/react";
+import { csrf } from "./utils/csrf.server";
+import { AuthenticityTokenProvider } from "remix-utils/csrf/react";
 
 export const links: LinksFunction = () => {
   return [
@@ -17,6 +22,18 @@ export const links: LinksFunction = () => {
       href: tailwindStyleSheetUrl,
     },
   ];
+};
+
+export const loader = async () => {
+  const [token, cookieHeader] = await csrf.commitToken();
+
+  const headers = new Headers();
+  cookieHeader && headers.append("set-cookie", cookieHeader);
+
+  return json(
+    { honeypotInputProps: honeypot.getInputProps(), csrfToken: token },
+    { headers }
+  );
 };
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -44,5 +61,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  const { csrfToken, honeypotInputProps } = useLoaderData<typeof loader>();
+
+  return (
+    <AuthenticityTokenProvider token={csrfToken}>
+      <HoneypotProvider {...honeypotInputProps}>
+        <Outlet />
+      </HoneypotProvider>
+    </AuthenticityTokenProvider>
+  );
 }

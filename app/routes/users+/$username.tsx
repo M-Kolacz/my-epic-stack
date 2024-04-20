@@ -1,4 +1,4 @@
-import { Link } from "#app/components/ui/link";
+import { Link } from "#app/components/link";
 
 const UsernameRoute = () => {
   return (
