@@ -9,7 +9,7 @@ export const checkHoneypot = (formData: FormData, path: string) => {
     honeypot.check(formData);
   } catch (error) {
     if (error instanceof SpamError) {
-      console.warn("🤖 Spam detected", path, error.message);
+      console.error("🤖 Spam detected", path, error.message);
       throw new Response("Form not submitted properly", { status: 400 });
     }
     throw error;
