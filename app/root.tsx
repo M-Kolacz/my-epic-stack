@@ -1,13 +1,16 @@
-import { LinksFunction } from "@remix-run/node";
+import { LinksFunction, json } from "@remix-run/node";
 import {
   Links,
   Meta,
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
 } from "@remix-run/react";
 import { Link } from "#app/components/link";
 import tailwindStyleSheetUrl from "./styles/tailwind.css?url";
+import { honeypot } from "./utils/honeypot.server";
+import { HoneypotProvider } from "remix-utils/honeypot/react";
 
 export const links: LinksFunction = () => {
   return [
@@ -17,6 +20,10 @@ export const links: LinksFunction = () => {
       href: tailwindStyleSheetUrl,
     },
   ];
+};
+
+export const loader = () => {
+  return json({ honeypotInputProps: honeypot.getInputProps() });
 };
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -44,5 +51,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  const data = useLoaderData<typeof loader>();
+
+  return (
+    <HoneypotProvider {...data.honeypotInputProps}>
+      <Outlet />
+    </HoneypotProvider>
+  );
 }

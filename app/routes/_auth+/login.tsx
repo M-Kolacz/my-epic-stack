@@ -5,9 +5,14 @@ import { useForm, getFormProps, getInputProps } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod";
 import { ActionFunctionArgs, json, redirect } from "@remix-run/node";
 import { Field } from "#app/components/form";
+import { HoneypotInputs } from "remix-utils/honeypot/react";
+import { SpamError } from "remix-utils/honeypot/server";
+import { checkHoneypot, honeypot } from "#app/utils/honeypot.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const formData = await request.formData();
+  checkHoneypot(formData);
+
   const submission = parseWithZod(formData, { schema: LoginSchema });
 
   if (submission.status !== "success") {
@@ -50,6 +55,8 @@ const LoginRoute = () => {
       />
 
       <Button type="submit">Submit</Button>
+
+      <HoneypotInputs />
     </Form>
   );
 };
