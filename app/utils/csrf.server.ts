@@ -20,7 +20,7 @@ export const checkCsrf = async (request: Request) => {
     await csrf.validate(request);
   } catch (error) {
     if (error instanceof CSRFError) {
-      console.warn("👮‍♂️ CSRF attack detected", getPath(request), error);
+      console.warn("👮‍♂️ CSRF attack detected", getPath(request), error.message);
       throw new Response("Form not submitted properly", { status: 400 });
     }
     throw error;
