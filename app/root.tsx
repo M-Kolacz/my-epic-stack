@@ -47,7 +47,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body className="h-full flex flex-col">
         <header className="bg-blue-500 p-4">
-          <Link to="/">My header</Link>
+          <Link to=".." relative="path">
+            My header
+          </Link>
         </header>
         <main className="flex-1 flex justify-center items-center">
           {children}

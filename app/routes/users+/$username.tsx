@@ -9,7 +9,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     where: { username: params.username },
   });
 
-  invariantResponse(user !== null, "User not found", { status: 404 });
+  invariantResponse(user, "User not found", { status: 404 });
 
   return json({ user });
 };
@@ -19,9 +19,9 @@ const UsernameRoute = () => {
 
   return (
     <div>
-      <div>Hi I am {data.user.username}</div>
-      <Link to=".." relative="path">
-        Go back to users
+      <h1 className="text-5xl pb-6">Hi I am {data.user.username} 👤</h1>
+      <Link to="notes" relative="path">
+        Check my notes 📝
       </Link>
     </div>
   );

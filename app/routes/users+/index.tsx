@@ -12,15 +12,19 @@ const UsersIndexRoute = () => {
   const data = useLoaderData<typeof loader>();
 
   return (
-    <ul className="flex flex-col gap-4">
-      {data.users.map((user) => (
-        <li key={user.username}>
-          <Link to={user.username} relative="path">
-            Go to {user.username}
-          </Link>
-        </li>
-      ))}
-    </ul>
+    <div>
+      <h1 className="text-5xl">Users 👥</h1>
+
+      <ul className="flex flex-col gap-4 pt-6">
+        {data.users.map((user) => (
+          <li key={user.username}>
+            <Link to={user.username} relative="path">
+              👤 {user.username}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 };
 

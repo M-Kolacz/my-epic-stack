@@ -13,7 +13,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     },
   });
 
-  invariantResponse(owner !== null, "User not found", {
+  invariantResponse(owner, "User not found", {
     status: 404,
   });
 
@@ -25,16 +25,17 @@ const NotesRoute = () => {
 
   return (
     <div>
-      <div>{data.owner.username} notes</div>
+      <h1 className="text-5xl pb-5">{data.owner.username} notes 📝</h1>
 
-      <ul>
+      <ul className="flex flex-col gap-4">
         {data.owner.notes.map((note) => (
-          <li key={note.id}>{note.title}</li>
+          <li key={note.id}>
+            <Link relative="path" to={note.id}>
+              {note.title}
+            </Link>
+          </li>
         ))}
       </ul>
-      <Link to=".." relative="path">
-        Go back to users
-      </Link>
     </div>
   );
 };

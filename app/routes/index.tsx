@@ -14,7 +14,7 @@ export default function Index() {
       <ul>
         <li>
           <Link to="users" relative="path">
-            Go to users
+            Check our users 👥
           </Link>
         </li>
       </ul>
