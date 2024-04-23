@@ -5,21 +5,33 @@ import { LoaderFunctionArgs, json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-  const user = await prisma.user.findUnique({
+  const owner = await prisma.user.findUnique({
     where: { username: params.username },
+    select: {
+      username: true,
+      notes: true,
+    },
   });
 
-  invariantResponse(user !== null, "User not found", { status: 404 });
+  invariantResponse(owner !== null, "User not found", {
+    status: 404,
+  });
 
-  return json({ user });
+  return json({ owner });
 };
 
-const UsernameRoute = () => {
+const NotesRoute = () => {
   const data = useLoaderData<typeof loader>();
 
   return (
     <div>
-      <div>Hi I am {data.user.username}</div>
+      <div>{data.owner.username} notes</div>
+
+      <ul>
+        {data.owner.notes.map((note) => (
+          <li key={note.id}>{note.title}</li>
+        ))}
+      </ul>
       <Link to=".." relative="path">
         Go back to users
       </Link>
@@ -27,4 +39,4 @@ const UsernameRoute = () => {
   );
 };
 
-export default UsernameRoute;
+export default NotesRoute;
