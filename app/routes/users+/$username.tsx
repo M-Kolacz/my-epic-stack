@@ -1,3 +1,4 @@
+import { GeneralErrorBoundary } from "#app/components/error-boundary";
 import { Link } from "#app/components/link";
 import { prisma } from "#app/utils/db.server";
 import { invariantResponse } from "#app/utils/invariant";
@@ -26,5 +27,13 @@ const UsernameRoute = () => {
     </div>
   );
 };
-
 export default UsernameRoute;
+
+export const ErrorBoundary = () => (
+  <GeneralErrorBoundary
+    statusHandlers={{
+      404: ({ params }) => <p>User {params.username} does not exist</p>,
+    }}
+    unexpectedErrorHandler={() => <p>Something went wrong!</p>}
+  />
+);
