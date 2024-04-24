@@ -13,6 +13,7 @@ import { honeypot } from "./utils/honeypot.server";
 import { HoneypotProvider } from "remix-utils/honeypot/react";
 import { csrf } from "./utils/csrf.server";
 import { AuthenticityTokenProvider } from "remix-utils/csrf/react";
+import { GeneralErrorBoundary } from "./components/error-boundary";
 
 export const links: LinksFunction = () => {
   return [
@@ -36,7 +37,7 @@ export const loader = async () => {
   );
 };
 
-export function Layout({ children }: { children: React.ReactNode }) {
+export const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <html lang="en" className="h-full">
       <head>
@@ -46,14 +47,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body className="h-full flex flex-col">
-        <header className="bg-blue-500 p-4">
-          <Link to="/">My header</Link>
-        </header>
-        <main className="flex-1 flex justify-center items-center">
-          {children}
-        </main>
-        <footer className="bg-blue-300 p-4">My footer</footer>
-
+        {children}
         <script
           dangerouslySetInnerHTML={{
             __html: `window.ENV = ${JSON.stringify(ENV)}`,
@@ -64,16 +58,41 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </body>
     </html>
   );
-}
+};
 
-export default function App() {
+const App = () => (
+  <>
+    <header className="bg-blue-500 p-4">
+      <Link to=".." relative="path">
+        My header
+      </Link>
+    </header>
+    <main className="flex-1 flex justify-center items-center">
+      <Outlet />
+    </main>
+    <footer className="bg-blue-300 p-4">My footer</footer>
+  </>
+);
+
+export default function AppWithProviders() {
   const { csrfToken, honeypotInputProps } = useLoaderData<typeof loader>();
 
   return (
     <AuthenticityTokenProvider token={csrfToken}>
       <HoneypotProvider {...honeypotInputProps}>
-        <Outlet />
+        <App />
       </HoneypotProvider>
     </AuthenticityTokenProvider>
   );
 }
+
+export const ErrorBoundary = () => (
+  <GeneralErrorBoundary
+    defaultStatusHandler={({ error }) => (
+      <p>
+        {error.status} {error.data}
+      </p>
+    )}
+    unexpectedErrorHandler={(error) => <p>OH NO</p>}
+  />
+);
