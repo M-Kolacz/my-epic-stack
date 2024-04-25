@@ -7,6 +7,7 @@ import {
 } from "@remix-run/react";
 
 import { cn } from "#app/utils/misc.tsx";
+import { Button } from "./ui/button";
 
 const linkVariants = cva("text-2xl hover:underline");
 
@@ -25,7 +26,13 @@ const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(
   ({ className, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : RemixLink;
     return (
-      <Comp className={cn(linkVariants({ className }))} ref={ref} {...props} />
+      <Button asChild variant={"link"}>
+        <Comp
+          className={cn(linkVariants({ className }))}
+          ref={ref}
+          {...props}
+        />
+      </Button>
     );
   }
 );

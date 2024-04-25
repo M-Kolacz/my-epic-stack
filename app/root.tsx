@@ -14,7 +14,8 @@ import { HoneypotProvider } from "remix-utils/honeypot/react";
 import { csrf } from "./utils/csrf.server";
 import { AuthenticityTokenProvider } from "remix-utils/csrf/react";
 import { GeneralErrorBoundary } from "./components/error-boundary";
-import React from "react";
+import React, { useState } from "react";
+import { Button } from "./components/ui/button";
 
 export const links: LinksFunction = () => {
   return [
@@ -38,21 +39,22 @@ export const loader = async () => {
   );
 };
 
-export const Layout = ({ children }: { children: React.ReactNode }) => {
-  const [theme, setTheme] = React.useState("dark");
-
+const Document = ({
+  children,
+  theme,
+}: {
+  children: React.ReactNode;
+  theme: "light" | "dark";
+}) => {
   return (
     <html lang="en" className={`${theme} h-full`}>
       <head>
+        <Meta />
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <Meta />
         <Links />
       </head>
       <body className="h-full flex flex-col">
-        <button onClick={() => setTheme(theme === "light" ? "dark" : "light")}>
-          Toggle theme
-        </button>
         {children}
         <script
           dangerouslySetInnerHTML={{
@@ -66,19 +68,32 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-const App = () => (
-  <>
-    <header className="bg-secondary p-4">
-      <Link to=".." relative="path">
-        My header
-      </Link>
-    </header>
-    <main className="flex-1 flex justify-center items-center">
-      <Outlet />
-    </main>
-    <footer className="bg-secondary p-4">My footer</footer>
-  </>
-);
+const App = () => {
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  return (
+    <Document theme={theme}>
+      <header className="bg-secondary p-4 flex justify-between">
+        <Link to=".." relative="path">
+          My Epic Stack 🚀
+        </Link>
+
+        <div>
+          <Button
+            variant={"outline"}
+            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+          >
+            Toggle theme {theme === "light" ? "🌛" : "🌞"}
+          </Button>
+        </div>
+      </header>
+      <main className="flex-1 flex justify-center items-center">
+        <Outlet />
+      </main>
+      <footer className="bg-secondary p-4">My footer</footer>
+    </Document>
+  );
+};
 
 export default function AppWithProviders() {
   const { csrfToken, honeypotInputProps } = useLoaderData<typeof loader>();
