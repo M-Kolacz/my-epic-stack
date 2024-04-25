@@ -14,6 +14,7 @@ import { HoneypotProvider } from "remix-utils/honeypot/react";
 import { csrf } from "./utils/csrf.server";
 import { AuthenticityTokenProvider } from "remix-utils/csrf/react";
 import { GeneralErrorBoundary } from "./components/error-boundary";
+import React from "react";
 
 export const links: LinksFunction = () => {
   return [
@@ -38,8 +39,10 @@ export const loader = async () => {
 };
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
+  const [theme, setTheme] = React.useState("dark");
+
   return (
-    <html lang="en" className="h-full">
+    <html lang="en" className={`${theme} h-full`}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -47,6 +50,9 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         <Links />
       </head>
       <body className="h-full flex flex-col">
+        <button onClick={() => setTheme(theme === "light" ? "dark" : "light")}>
+          Toggle theme
+        </button>
         {children}
         <script
           dangerouslySetInnerHTML={{
@@ -62,7 +68,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
 const App = () => (
   <>
-    <header className="bg-blue-500 p-4">
+    <header className="bg-secondary p-4">
       <Link to=".." relative="path">
         My header
       </Link>
@@ -70,7 +76,7 @@ const App = () => (
     <main className="flex-1 flex justify-center items-center">
       <Outlet />
     </main>
-    <footer className="bg-blue-300 p-4">My footer</footer>
+    <footer className="bg-secondary p-4">My footer</footer>
   </>
 );
 

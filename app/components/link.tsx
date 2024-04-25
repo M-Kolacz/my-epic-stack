@@ -8,9 +8,7 @@ import {
 
 import { cn } from "#app/utils/misc.tsx";
 
-const linkVariants = cva(
-  "text-blue-950 text-2xl underline hover:text-blue-900"
-);
+const linkVariants = cva("text-2xl hover:underline");
 
 export interface LinkProps
   extends RemixLinkProps,
