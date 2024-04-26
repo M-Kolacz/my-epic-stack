@@ -1,10 +1,16 @@
-import { LinksFunction, json } from "@remix-run/node";
+import {
+  ActionFunctionArgs,
+  LinksFunction,
+  LoaderFunctionArgs,
+  json,
+} from "@remix-run/node";
 import {
   Links,
   Meta,
   Outlet,
   Scripts,
   ScrollRestoration,
+  useFetcher,
   useLoaderData,
 } from "@remix-run/react";
 import { Link } from "#app/components/link";
@@ -14,8 +20,12 @@ import { HoneypotProvider } from "remix-utils/honeypot/react";
 import { csrf } from "./utils/csrf.server";
 import { AuthenticityTokenProvider } from "remix-utils/csrf/react";
 import { GeneralErrorBoundary } from "./components/error-boundary";
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "./components/ui/button";
+import { getFormProps, useForm } from "@conform-to/react";
+import { parseWithZod } from "@conform-to/zod";
+import { ThemeSchema } from "./utils/schema";
+import { getTheme, getThemeCookie, type Theme } from "./utils/theme.server";
 
 export const links: LinksFunction = () => {
   return [
@@ -27,16 +37,40 @@ export const links: LinksFunction = () => {
   ];
 };
 
-export const loader = async () => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const [token, cookieHeader] = await csrf.commitToken();
 
   const headers = new Headers();
   cookieHeader && headers.append("set-cookie", cookieHeader);
 
+  const theme = getTheme(request);
+
   return json(
-    { honeypotInputProps: honeypot.getInputProps(), csrfToken: token },
+    {
+      honeypotInputProps: honeypot.getInputProps(),
+      csrfToken: token,
+      theme,
+    } as const,
     { headers }
   );
+};
+
+export const action = async ({ request }: ActionFunctionArgs) => {
+  const formData = await request.formData();
+
+  const submission = parseWithZod(formData, { schema: ThemeSchema });
+
+  if (submission.status !== "success") {
+    return json({ lastResult: submission.reply() });
+  }
+
+  const theme = submission.value.theme;
+  const themeCookie = getThemeCookie(theme);
+
+  const headers = new Headers();
+  headers.append("set-cookie", themeCookie);
+
+  return json({ lastResult: submission.reply() }, { headers });
 };
 
 const Document = ({
@@ -44,7 +78,7 @@ const Document = ({
   theme,
 }: {
   children: React.ReactNode;
-  theme: "light" | "dark";
+  theme: Theme;
 }) => {
   return (
     <html lang="en" className={`${theme} h-full`}>
@@ -69,7 +103,7 @@ const Document = ({
 };
 
 const App = () => {
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const theme = useTheme();
 
   return (
     <Document theme={theme}>
@@ -79,12 +113,7 @@ const App = () => {
         </Link>
 
         <div>
-          <Button
-            variant={"outline"}
-            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-          >
-            Toggle theme {theme === "light" ? "🌛" : "🌞"}
-          </Button>
+          <ThemeToggle theme={theme} />
         </div>
       </header>
       <main className="flex-1 flex justify-center items-center">
@@ -93,6 +122,50 @@ const App = () => {
       <footer className="bg-secondary p-4">My footer</footer>
     </Document>
   );
+};
+
+const themeFetcherKey = "theme-switch";
+
+const ThemeToggle = ({ theme }: { theme: Theme }) => {
+  const fetcher = useFetcher<typeof action>({ key: themeFetcherKey });
+
+  const [form] = useForm({
+    id: "theme-switch",
+    lastResult: fetcher.data?.lastResult,
+    onValidate: ({ formData }) =>
+      parseWithZod(formData, { schema: ThemeSchema }),
+  });
+
+  const nextMode = theme === "light" ? "dark" : "light";
+
+  return (
+    <fetcher.Form method="POST" {...getFormProps(form)}>
+      <input type="hidden" name="theme" value={nextMode} />
+      <Button
+        type="submit"
+        name="intent"
+        value="theme-switch"
+        variant={"outline"}
+      >
+        Toggle theme {theme === "light" ? "🌛" : "🌞"}
+      </Button>
+    </fetcher.Form>
+  );
+};
+
+const useTheme = () => {
+  const fetcher = useFetcher<typeof action>({ key: themeFetcherKey });
+  const data = useLoaderData<typeof loader>();
+
+  if (fetcher && fetcher.formData) {
+    const submission = parseWithZod(fetcher.formData, { schema: ThemeSchema });
+
+    if (submission.status === "success") {
+      return submission.value.theme;
+    }
+  }
+
+  return data.theme;
 };
 
 export default function AppWithProviders() {
