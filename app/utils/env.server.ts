@@ -6,6 +6,7 @@ const schema = z.object({
   CSRF_SECRET: z.string(),
   CSRF_SIGN_SECTER: z.string(),
   HONEYPOT_SECRET: z.string(),
+  SESSION_SECRET: z.string(),
 });
 
 declare global {
