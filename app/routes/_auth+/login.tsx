@@ -10,6 +10,7 @@ import { checkHoneypot } from "#app/utils/honeypot.server";
 import { AuthenticityTokenInput } from "remix-utils/csrf/react";
 import { checkCsrf } from "#app/utils/csrf.server";
 import { getPath } from "#app/utils/server";
+import { redirectWithToast } from "#app/utils/toast.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   await checkCsrf(request);
@@ -22,7 +23,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return json(submission.reply());
   }
 
-  return redirect("/users");
+  return redirectWithToast("/users", {
+    description: "Welcome to Remix! 🎉",
+    id: "1",
+    title: "Welcome to Remix!",
+    type: "info",
+  });
 };
 
 const LoginRoute = () => {

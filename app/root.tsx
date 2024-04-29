@@ -26,6 +26,9 @@ import { getFormProps, useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
 import { ThemeSchema } from "./utils/schema";
 import { getTheme, getThemeCookie, type Theme } from "./utils/theme.server";
+import { Toaster } from "sonner";
+import { useToast } from "./components/toaster";
+import { getToast, toastSessionStorage } from "./utils/toast.server";
 
 export const links: LinksFunction = () => {
   return [
@@ -38,10 +41,11 @@ export const links: LinksFunction = () => {
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const [token, cookieHeader] = await csrf.commitToken();
+  const { toast, toastHeaders } = await getToast(request);
+  const headers = new Headers(toastHeaders);
 
-  const headers = new Headers();
-  cookieHeader && headers.append("set-cookie", cookieHeader);
+  const [token, csrfCookie] = await csrf.commitToken();
+  csrfCookie && headers.append("set-cookie", csrfCookie);
 
   const theme = getTheme(request);
 
@@ -50,6 +54,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       honeypotInputProps: honeypot.getInputProps(),
       csrfToken: token,
       theme,
+      toast,
     } as const,
     { headers }
   );
@@ -102,8 +107,13 @@ const Document = ({
   );
 };
 
+type Test = JsonifyObject;
+
 const App = () => {
+  const { toast } = useLoaderData<typeof loader>();
+
   const theme = useTheme();
+  useToast(toast);
 
   return (
     <Document theme={theme}>
@@ -120,6 +130,7 @@ const App = () => {
         <Outlet />
       </main>
       <footer className="bg-secondary p-4">My footer</footer>
+      <Toaster closeButton position="bottom-right" />
     </Document>
   );
 };
