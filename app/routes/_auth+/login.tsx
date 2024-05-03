@@ -10,7 +10,8 @@ import { checkHoneypot } from "#app/utils/honeypot.server";
 import { AuthenticityTokenInput } from "remix-utils/csrf/react";
 import { checkCsrf } from "#app/utils/csrf.server";
 import { getPath } from "#app/utils/server";
-import { redirectWithToast } from "#app/utils/toast.server";
+import { createToastCookie } from "#app/utils/toast.server";
+import { createConfettiCookie } from "#app/utils/confetti.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   await checkCsrf(request);
@@ -23,11 +24,21 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return json(submission.reply());
   }
 
-  return redirectWithToast("/users", {
-    description: "Welcome to Remix! 🎉",
-    id: "1",
-    title: "Welcome to Remix!",
+  const headers = new Headers();
+
+  const confettiCookie = await createConfettiCookie("login-success");
+  headers.append("set-cookie", confettiCookie);
+
+  const toastCookie = await createToastCookie({
+    description: "You have successfully logged in!",
+    id: "login-success",
+    title: "Success!",
     type: "info",
+  });
+  headers.append("set-cookie", toastCookie);
+
+  return redirect("/users", {
+    headers,
   });
 };
 

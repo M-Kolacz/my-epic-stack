@@ -28,7 +28,9 @@ import { ThemeSchema } from "./utils/schema";
 import { getTheme, getThemeCookie, type Theme } from "./utils/theme.server";
 import { Toaster } from "sonner";
 import { useToast } from "./components/toaster";
-import { getToast, toastSessionStorage } from "./utils/toast.server";
+import { getToast } from "./utils/toast.server";
+import { Confetti } from "./components/confetti";
+import { getConfettiId } from "./utils/confetti.server";
 
 export const links: LinksFunction = () => {
   return [
@@ -41,8 +43,13 @@ export const links: LinksFunction = () => {
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { toast, toastHeaders } = await getToast(request);
-  const headers = new Headers(toastHeaders);
+  const headers = new Headers();
+
+  const { toast, toastCookie } = await getToast(request);
+  headers.append("set-cookie", toastCookie);
+
+  const { confettiCookie, confettiId } = await getConfettiId(request);
+  headers.append("set-cookie", confettiCookie);
 
   const [token, csrfCookie] = await csrf.commitToken();
   csrfCookie && headers.append("set-cookie", csrfCookie);
@@ -55,6 +62,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       csrfToken: token,
       theme,
       toast,
+      confettiId,
     } as const,
     { headers }
   );
@@ -107,10 +115,8 @@ const Document = ({
   );
 };
 
-type Test = JsonifyObject;
-
 const App = () => {
-  const { toast } = useLoaderData<typeof loader>();
+  const { toast, confettiId } = useLoaderData<typeof loader>();
 
   const theme = useTheme();
   useToast(toast);
@@ -131,6 +137,7 @@ const App = () => {
       </main>
       <footer className="bg-secondary p-4">My footer</footer>
       <Toaster closeButton position="bottom-right" />
+      <Confetti id={confettiId} />
     </Document>
   );
 };

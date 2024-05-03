@@ -58,8 +58,6 @@ export const getToast = async (request: Request) => {
   const toast = toastSession.get("toast");
 
   const toastCookie = await toastSessionStorage.destroySession(toastSession);
-  const toastHeaders = new Headers();
-  toastHeaders.append("set-cookie", toastCookie);
 
-  return { toast, toastHeaders };
+  return { toast, toastCookie };
 };
