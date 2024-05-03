@@ -12,16 +12,44 @@ import { checkCsrf } from "#app/utils/csrf.server";
 import { getPath } from "#app/utils/server";
 import { createToastCookie } from "#app/utils/toast.server";
 import { createConfettiCookie } from "#app/utils/confetti.server";
+import { prisma } from "#app/utils/db.server";
+import { z } from "zod";
+import { authSessionStorage } from "#app/utils/authSession.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   await checkCsrf(request);
   const formData = await request.formData();
   checkHoneypot(formData, getPath(request));
 
-  const submission = parseWithZod(formData, { schema: LoginSchema });
+  const submission = await parseWithZod(formData, {
+    schema: (intent) =>
+      LoginSchema.transform(async (data, ctx) => {
+        if (intent !== null) return { ...data, user: null };
 
-  if (submission.status !== "success") {
-    return json(submission.reply());
+        const user = await prisma.user.findUnique({
+          where: { username: data.username },
+        });
+
+        if (!user) {
+          ctx.addIssue({
+            code: "custom",
+            message: "Invalid username or password",
+          });
+          return z.NEVER;
+        }
+
+        return { ...data, user };
+      }),
+    async: true,
+  });
+
+  if (submission.status !== "success" || !submission.value.user) {
+    return json(
+      { result: submission.reply({ hideFields: ["password"] }) },
+      {
+        status: submission.status === "error" ? 400 : 200,
+      }
+    );
   }
 
   const headers = new Headers();
@@ -37,18 +65,27 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   });
   headers.append("set-cookie", toastCookie);
 
+  const authSession = await authSessionStorage.getSession(
+    request.headers.get("cookie")
+  );
+  authSession.set("userId", submission.value.user.id);
+  headers.append(
+    "set-cookie",
+    await authSessionStorage.commitSession(authSession)
+  );
+
   return redirect("/users", {
     headers,
   });
 };
 
 const LoginRoute = () => {
-  const lastResult = useActionData<typeof action>();
+  const actionData = useActionData<typeof action>();
 
   const [form, fields] = useForm({
     id: "login-form",
     constraint: getZodConstraint(LoginSchema),
-    lastResult,
+    lastResult: actionData?.result,
     onValidate: ({ formData }) => {
       return parseWithZod(formData, { schema: LoginSchema });
     },
