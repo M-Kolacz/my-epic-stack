@@ -1,5 +1,6 @@
 import { Label } from "#app/components/ui/label";
 import { Input, InputProps } from "#app/components/ui/input";
+import { FormMetadata } from "@conform-to/react";
 
 type FieldProps = InputProps & {
   label: string;
@@ -7,14 +8,14 @@ type FieldProps = InputProps & {
   errorId: string;
 };
 
-const ErrorList = ({
+export const ErrorList = ({
   errorId,
   errors,
 }: {
-  errors: string[];
-  errorId: string;
+  errors: FormMetadata["errors"];
+  errorId: FormMetadata["errorId"];
 }) => {
-  return (
+  return errors ? (
     <ul>
       {errors.map((error) => {
         return (
@@ -24,7 +25,7 @@ const ErrorList = ({
         );
       })}
     </ul>
-  );
+  ) : null;
 };
 
 export const Field = ({
@@ -37,7 +38,7 @@ export const Field = ({
     <div>
       <Label>{label}</Label>
       <Input {...inputProps} />
-      {errors ? <ErrorList errors={errors} errorId={errorId} /> : null}
+      <ErrorList errors={errors} errorId={errorId} />
     </div>
   );
 };

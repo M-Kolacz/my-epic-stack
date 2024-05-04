@@ -4,7 +4,7 @@ import { LoginSchema } from "#app/utils/schema";
 import { useForm, getFormProps, getInputProps } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod";
 import { ActionFunctionArgs, json, redirect } from "@remix-run/node";
-import { Field } from "#app/components/form";
+import { Field, ErrorList } from "#app/components/form";
 import { HoneypotInputs } from "remix-utils/honeypot/react";
 import { checkHoneypot } from "#app/utils/honeypot.server";
 import { AuthenticityTokenInput } from "remix-utils/csrf/react";
@@ -86,14 +86,13 @@ const LoginRoute = () => {
     id: "login-form",
     constraint: getZodConstraint(LoginSchema),
     lastResult: actionData?.result,
-    onValidate: ({ formData }) => {
-      return parseWithZod(formData, { schema: LoginSchema });
-    },
+    onValidate: ({ formData }) =>
+      parseWithZod(formData, { schema: LoginSchema }),
     shouldValidate: "onBlur",
   });
 
   return (
-    <Form method="POST" {...getFormProps(form)}>
+    <Form method="POST" {...getFormProps(form)} className="flex gap-4 flex-col">
       <Field
         {...getInputProps(fields.username, { type: "text" })}
         errors={fields.username.errors}
@@ -110,7 +109,7 @@ const LoginRoute = () => {
         label="Password"
         autoComplete="current-password"
       />
-
+      <ErrorList errors={form.errors} errorId={form.errorId} />
       <Button type="submit">Submit</Button>
 
       <HoneypotInputs />
