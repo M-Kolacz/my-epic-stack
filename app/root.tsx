@@ -142,7 +142,7 @@ const App = () => {
 
         <div className="flex gap-2">
           {user && (
-            <Avatar>
+            <Avatar className="hover:rotate-180 transition-transform">
               <AvatarImage src="https://styles.redditmedia.com/t5_544m6d/styles/communityIcon_m3hqk7mhibvb1.png" />
               <AvatarFallback>MK</AvatarFallback>
             </Avatar>
