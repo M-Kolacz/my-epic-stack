@@ -1,5 +1,5 @@
 import { prisma } from "#app/utils/db.server";
-import { cleanupDb, createUser } from "#tests/db-utils";
+import { cleanupDb, createPassword, createUser } from "#tests/db-utils";
 import { faker } from "@faker-js/faker";
 
 const seed = async () => {
@@ -19,6 +19,9 @@ const seed = async () => {
     await prisma.user.create({
       data: {
         ...userData,
+        password: {
+          create: await createPassword(userData.username),
+        },
         notes: {
           create: Array.from({
             length: faker.number.int({ min: 1, max: 5 }),
@@ -40,6 +43,9 @@ const seed = async () => {
       email: "kody@gmail.com",
       name: "Kody",
       username: "kody",
+      password: {
+        create: await createPassword("kody"),
+      },
       notes: {
         create: Array.from({
           length: faker.number.int({ min: 1, max: 5 }),

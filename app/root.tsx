@@ -31,6 +31,9 @@ import { useToast } from "./components/toaster";
 import { getToast } from "./utils/toast.server";
 import { Confetti } from "./components/confetti";
 import { getConfettiId } from "./utils/confetti.server";
+import { authSessionStorage } from "./utils/authSession.server";
+import { prisma } from "./utils/db.server";
+import { Avatar, AvatarFallback, AvatarImage } from "#app/components/ui/avatar";
 
 export const links: LinksFunction = () => {
   return [
@@ -44,6 +47,14 @@ export const links: LinksFunction = () => {
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const headers = new Headers();
+
+  const authSession = await authSessionStorage.getSession(
+    request.headers.get("cookie")
+  );
+  const userId = authSession.get("userId");
+  const user = userId
+    ? await prisma.user.findUnique({ where: { id: userId } })
+    : null;
 
   const { toast, toastCookie } = await getToast(request);
   headers.append("set-cookie", toastCookie);
@@ -60,6 +71,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     {
       honeypotInputProps: honeypot.getInputProps(),
       csrfToken: token,
+      user,
       theme,
       toast,
       confettiId,
@@ -116,7 +128,7 @@ const Document = ({
 };
 
 const App = () => {
-  const { toast, confettiId } = useLoaderData<typeof loader>();
+  const { toast, confettiId, user } = useLoaderData<typeof loader>();
 
   const theme = useTheme();
   useToast(toast);
@@ -128,7 +140,13 @@ const App = () => {
           My Epic Stack 🚀
         </Link>
 
-        <div>
+        <div className="flex gap-2">
+          {user && (
+            <Avatar className="hover:rotate-180 transition-transform">
+              <AvatarImage src="https://styles.redditmedia.com/t5_544m6d/styles/communityIcon_m3hqk7mhibvb1.png" />
+              <AvatarFallback>MK</AvatarFallback>
+            </Avatar>
+          )}
           <ThemeToggle theme={theme} />
         </div>
       </header>
