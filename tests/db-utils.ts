@@ -1,6 +1,7 @@
 import { prisma } from "#app/utils/db.server";
 import { faker } from "@faker-js/faker";
 import { UniqueEnforcer } from "enforce-unique";
+import bcrypt from "bcryptjs";
 
 const uniqueUsernameEnforcer = new UniqueEnforcer();
 
@@ -25,6 +26,10 @@ export const createUser = async () => {
     email: `${username}@gmail.com`,
   };
 };
+
+export const createPassword = async (
+  password: string = faker.internet.password()
+) => ({ hash: await bcrypt.hash(password, 10) });
 
 export const cleanupDb = async () => {
   const tables = await prisma.$queryRaw<
