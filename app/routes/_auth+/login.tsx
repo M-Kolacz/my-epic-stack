@@ -15,6 +15,7 @@ import { createConfettiCookie } from "#app/utils/confetti.server";
 import { prisma } from "#app/utils/db.server";
 import { z } from "zod";
 import { authSessionStorage } from "#app/utils/authSession.server";
+import { bcrypt } from "#app/utils/auth.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   await checkCsrf(request);
@@ -26,11 +27,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       LoginSchema.transform(async (data, ctx) => {
         if (intent !== null) return { ...data, user: null };
 
-        const user = await prisma.user.findUnique({
+        const userWithPassword = await prisma.user.findUnique({
           where: { username: data.username },
+          select: { id: true, password: { select: { hash: true } } },
         });
 
-        if (!user) {
+        if (!userWithPassword || !userWithPassword.password) {
           ctx.addIssue({
             code: "custom",
             message: "Invalid username or password",
@@ -38,7 +40,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           return z.NEVER;
         }
 
-        return { ...data, user };
+        const isValidPassword = await bcrypt.compare(
+          data.password,
+          userWithPassword.password.hash
+        );
+
+        if (!isValidPassword) {
+          ctx.addIssue({
+            code: "custom",
+            message: "Invalid username or password",
+          });
+          return z.NEVER;
+        }
+
+        return { ...data, user: { id: userWithPassword.id } };
       }),
     async: true,
   });

@@ -44,7 +44,7 @@ const seed = async () => {
       name: "Kody",
       username: "kody",
       password: {
-        create: await createPassword("kody"),
+        create: await createPassword("kodylovesyou"),
       },
       notes: {
         create: Array.from({
