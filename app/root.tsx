@@ -34,6 +34,7 @@ import { getConfettiId } from "./utils/confetti.server";
 import { authSessionStorage } from "./utils/authSession.server";
 import { prisma } from "./utils/db.server";
 import { Avatar, AvatarFallback, AvatarImage } from "#app/components/ui/avatar";
+import { useOptionalUser } from "./utils/user";
 
 export const links: LinksFunction = () => {
   return [
@@ -128,8 +129,8 @@ const Document = ({
 };
 
 const App = () => {
-  const { toast, confettiId, user } = useLoaderData<typeof loader>();
-
+  const { toast, confettiId } = useLoaderData<typeof loader>();
+  const user = useOptionalUser();
   const theme = useTheme();
   useToast(toast);
 
