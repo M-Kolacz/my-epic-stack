@@ -6,6 +6,7 @@ import { invariantResponse } from "#app/utils/invariant";
 import { useOptionalUser } from "#app/utils/user";
 import { LoaderFunctionArgs, json } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
+import { AuthenticityTokenInput } from "remix-utils/csrf/react";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const user = await prisma.user.findUnique({
@@ -32,6 +33,8 @@ const UsernameRoute = () => {
       {isLoggedInUser && (
         <Form method="POST" action="/logout">
           <Button type="submit">Logout</Button>
+
+          <AuthenticityTokenInput />
         </Form>
       )}
     </div>

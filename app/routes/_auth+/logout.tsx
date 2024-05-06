@@ -1,11 +1,14 @@
 import { authSessionStorage } from "#app/utils/authSession.server";
-import { redirect } from "@remix-run/node";
+import { ActionFunctionArgs, redirect } from "@remix-run/node";
+import { checkCsrf } from "#app/utils/csrf.server";
 
 export const loader = () => {
   return redirect("/");
 };
 
-export const action = async () => {
+export const action = async ({ request }: ActionFunctionArgs) => {
+  await checkCsrf(request);
+
   const authSession = await authSessionStorage.getSession();
 
   const headers = new Headers();
