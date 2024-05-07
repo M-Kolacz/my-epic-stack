@@ -3,6 +3,7 @@ import {
   LinksFunction,
   LoaderFunctionArgs,
   json,
+  redirect,
 } from "@remix-run/node";
 import {
   Links,
@@ -47,8 +48,6 @@ export const links: LinksFunction = () => {
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const headers = new Headers();
-
   const authSession = await authSessionStorage.getSession(
     request.headers.get("cookie")
   );
@@ -56,6 +55,18 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = userId
     ? await prisma.user.findUnique({ where: { id: userId } })
     : null;
+
+  if (userId && !user) {
+    const headers = new Headers();
+    headers.append(
+      "set-cookie",
+      await authSessionStorage.destroySession(authSession)
+    );
+
+    throw redirect("/", { headers });
+  }
+
+  const headers = new Headers();
 
   const { toast, toastCookie } = await getToast(request);
   headers.append("set-cookie", toastCookie);
