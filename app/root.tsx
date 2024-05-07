@@ -57,6 +57,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     : null;
 
   if (userId && !user) {
+    // The user doesn't exist in the database anymore, so we should log them out
     const headers = new Headers();
     headers.append(
       "set-cookie",
