@@ -3,8 +3,10 @@ import {
   LinksFunction,
   LoaderFunctionArgs,
   json,
+  redirect,
 } from "@remix-run/node";
 import {
+  Form,
   Links,
   Meta,
   Outlet,
@@ -12,15 +14,21 @@ import {
   ScrollRestoration,
   useFetcher,
   useLoaderData,
+  useLocation,
+  useSubmit,
 } from "@remix-run/react";
 import { Link } from "#app/components/link";
 import tailwindStyleSheetUrl from "./styles/tailwind.css?url";
 import { honeypot } from "./utils/honeypot.server";
 import { HoneypotProvider } from "remix-utils/honeypot/react";
 import { csrf } from "./utils/csrf.server";
-import { AuthenticityTokenProvider } from "remix-utils/csrf/react";
+import {
+  AuthenticityTokenInput,
+  AuthenticityTokenProvider,
+  useAuthenticityToken,
+} from "remix-utils/csrf/react";
 import { GeneralErrorBoundary } from "./components/error-boundary";
-import React from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "./components/ui/button";
 import { getFormProps, useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod";
@@ -35,6 +43,16 @@ import { authSessionStorage } from "./utils/authSession.server";
 import { prisma } from "./utils/db.server";
 import { Avatar, AvatarFallback, AvatarImage } from "#app/components/ui/avatar";
 import { useOptionalUser } from "./utils/user";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "./components/ui/alert-dialog";
 
 export const links: LinksFunction = () => {
   return [
@@ -47,8 +65,6 @@ export const links: LinksFunction = () => {
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const headers = new Headers();
-
   const authSession = await authSessionStorage.getSession(
     request.headers.get("cookie")
   );
@@ -56,6 +72,19 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = userId
     ? await prisma.user.findUnique({ where: { id: userId } })
     : null;
+
+  if (userId && !user) {
+    // The user doesn't exist in the database anymore, so we should log them out
+    const headers = new Headers();
+    headers.append(
+      "set-cookie",
+      await authSessionStorage.destroySession(authSession)
+    );
+
+    throw redirect("/", { headers });
+  }
+
+  const headers = new Headers();
 
   const { toast, toastCookie } = await getToast(request);
   headers.append("set-cookie", toastCookie);
@@ -102,9 +131,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 const Document = ({
   children,
   theme,
+  confettiId,
+  isLoggedIn = false,
 }: {
   children: React.ReactNode;
   theme: Theme;
+  confettiId?: string;
+  isLoggedIn?: boolean;
 }) => {
   return (
     <html lang="en" className={`${theme} h-full`}>
@@ -121,6 +154,9 @@ const Document = ({
             __html: `window.ENV = ${JSON.stringify(ENV)}`,
           }}
         />
+        {isLoggedIn ? <LogoutTimer /> : null}
+        <Toaster closeButton position="bottom-right" />
+        <Confetti id={confettiId} />
         <ScrollRestoration />
         <Scripts />
       </body>
@@ -135,19 +171,26 @@ const App = () => {
   useToast(toast);
 
   return (
-    <Document theme={theme}>
+    <Document theme={theme} confettiId={confettiId} isLoggedIn={!!user}>
       <header className="bg-secondary p-4 flex justify-between">
         <Link to=".." relative="path">
           My Epic Stack 🚀
         </Link>
 
         <div className="flex gap-2">
-          {user && (
-            <Avatar className="hover:rotate-180 transition-transform">
-              <AvatarImage src="https://styles.redditmedia.com/t5_544m6d/styles/communityIcon_m3hqk7mhibvb1.png" />
-              <AvatarFallback>MK</AvatarFallback>
-            </Avatar>
+          {user ? (
+            <Link to={`/users/${user.username}`}>
+              <Avatar className="hover:rotate-180 transition-transform">
+                <AvatarImage src="https://styles.redditmedia.com/t5_544m6d/styles/communityIcon_m3hqk7mhibvb1.png" />
+                <AvatarFallback>MK</AvatarFallback>
+              </Avatar>
+            </Link>
+          ) : (
+            <Button asChild variant={"outline"}>
+              <Link to="/login">Login</Link>
+            </Button>
           )}
+
           <ThemeToggle theme={theme} />
         </div>
       </header>
@@ -155,8 +198,6 @@ const App = () => {
         <Outlet />
       </main>
       <footer className="bg-secondary p-4">My footer</footer>
-      <Toaster closeButton position="bottom-right" />
-      <Confetti id={confettiId} />
     </Document>
   );
 };
@@ -216,6 +257,77 @@ export default function AppWithProviders() {
     </AuthenticityTokenProvider>
   );
 }
+
+/**
+ * The logout time in milliseconds.
+ */
+export const LOGOUT_TIME = 1000 * 60 * 60;
+
+/**
+ * Time in milliseconds before the modal is shown for logout.
+ */
+export const MODAL_TIME = LOGOUT_TIME - 1000 * 60 * 2;
+
+const LogoutTimer = () => {
+  const [status, setStatus] = useState<"idle" | "show-modal">("idle");
+  const location = useLocation();
+  const submit = useSubmit();
+  const csrf = useAuthenticityToken();
+
+  const modalTimer = useRef<ReturnType<typeof setTimeout>>();
+  const logoutTimer = useRef<ReturnType<typeof setTimeout>>();
+
+  const logout = useCallback(() => {
+    submit({ csrf }, { method: "POST", action: "/logout" });
+  }, [submit]);
+
+  const cleanupTimers = useCallback(() => {
+    clearTimeout(modalTimer.current);
+    clearTimeout(logoutTimer.current);
+  }, []);
+
+  const resetTimers = useCallback(() => {
+    cleanupTimers();
+    modalTimer.current = setTimeout(() => {
+      setStatus("show-modal");
+    }, MODAL_TIME);
+    logoutTimer.current = setTimeout(logout, LOGOUT_TIME);
+  }, [cleanupTimers, logout, LOGOUT_TIME, MODAL_TIME]);
+
+  useEffect(() => resetTimers(), [resetTimers, location.key]);
+  useEffect(() => cleanupTimers, [cleanupTimers]);
+
+  const closeModal = () => {
+    setStatus("idle");
+    resetTimers();
+  };
+
+  return (
+    <AlertDialog
+      aria-label="Pending Logout Notification"
+      open={status === "show-modal"}
+    >
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you still there?</AlertDialogTitle>
+        </AlertDialogHeader>
+        <AlertDialogDescription>
+          You are going to be logged out due to inactivity. Close this modal to
+          stay logged in.
+        </AlertDialogDescription>
+        <AlertDialogFooter className="flex items-end gap-8">
+          <AlertDialogCancel onClick={closeModal}>
+            Remain Logged In
+          </AlertDialogCancel>
+          <Form method="POST" action="/logout">
+            <AlertDialogAction type="submit">Logout</AlertDialogAction>
+            <AuthenticityTokenInput />
+          </Form>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+};
 
 export const ErrorBoundary = () => (
   <GeneralErrorBoundary

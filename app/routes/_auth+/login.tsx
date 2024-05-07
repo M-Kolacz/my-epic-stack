@@ -4,7 +4,7 @@ import { LoginSchema } from "#app/utils/schema";
 import { useForm, getFormProps, getInputProps } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod";
 import { ActionFunctionArgs, json, redirect } from "@remix-run/node";
-import { Field, ErrorList } from "#app/components/form";
+import { Field, ErrorList, CheckboxField } from "#app/components/form";
 import { HoneypotInputs } from "remix-utils/honeypot/react";
 import { checkHoneypot } from "#app/utils/honeypot.server";
 import { AuthenticityTokenInput } from "remix-utils/csrf/react";
@@ -15,7 +15,7 @@ import { createConfettiCookie } from "#app/utils/confetti.server";
 import { prisma } from "#app/utils/db.server";
 import { z } from "zod";
 import { authSessionStorage } from "#app/utils/authSession.server";
-import { bcrypt } from "#app/utils/auth.server";
+import { bcrypt, getSessionExpirationDate } from "#app/utils/auth.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   await checkCsrf(request);
@@ -67,6 +67,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
+  const { remember, user } = submission.value;
+
   const headers = new Headers();
 
   const confettiCookie = await createConfettiCookie("login-success");
@@ -83,10 +85,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const authSession = await authSessionStorage.getSession(
     request.headers.get("cookie")
   );
-  authSession.set("userId", submission.value.user.id);
+  authSession.set("userId", user.id);
   headers.append(
     "set-cookie",
-    await authSessionStorage.commitSession(authSession)
+    await authSessionStorage.commitSession(authSession, {
+      expires: remember ? getSessionExpirationDate() : undefined,
+    })
   );
 
   return redirect("/users", {
@@ -124,6 +128,11 @@ const LoginRoute = () => {
         label="Password"
         autoComplete="current-password"
       />
+
+      <CheckboxField
+        {...getInputProps(fields.remember, { type: "checkbox" })}
+      />
+
       <ErrorList errors={form.errors} errorId={form.errorId} />
       <Button type="submit">Submit</Button>
 

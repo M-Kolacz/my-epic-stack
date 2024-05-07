@@ -4,7 +4,7 @@ export const authSessionStorage = createCookieSessionStorage<{
   userId: string;
 }>({
   cookie: {
-    name: "authSession",
+    name: "my-epic-auth-session",
     path: "/",
     httpOnly: true,
     sameSite: "lax",

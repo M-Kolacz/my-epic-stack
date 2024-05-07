@@ -1,5 +1,5 @@
 import { Form, useActionData } from "@remix-run/react";
-import { Field, ErrorList } from "#app/components/form";
+import { Field, ErrorList, CheckboxField } from "#app/components/form";
 import { Button } from "#app/components/ui/button";
 import { getFormProps, getInputProps, useForm } from "@conform-to/react";
 import { SignupSchema } from "#app/utils/schema";
@@ -11,10 +11,11 @@ import { checkCsrf } from "#app/utils/csrf.server";
 import { checkHoneypot } from "#app/utils/honeypot.server";
 import { getPath } from "#app/utils/server";
 import { prisma } from "#app/utils/db.server";
-import { bcrypt } from "#app/utils/auth.server";
+import { bcrypt, getSessionExpirationDate } from "#app/utils/auth.server";
 import { createConfettiCookie } from "#app/utils/confetti.server";
 import { createToastCookie } from "#app/utils/toast.server";
 import { authSessionStorage } from "#app/utils/authSession.server";
+import { remember } from "@epic-web/remember";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   await checkCsrf(request);
@@ -79,6 +80,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
+  const { user, remember } = submission.value;
+
   const headers = new Headers();
 
   const confettiCookie = await createConfettiCookie("signup-success");
@@ -95,10 +98,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const authSession = await authSessionStorage.getSession(
     request.headers.get("cookie")
   );
-  authSession.set("userId", submission.value.user.id);
+  authSession.set("userId", user.id);
   headers.append(
     "set-cookie",
-    await authSessionStorage.commitSession(authSession)
+    await authSessionStorage.commitSession(authSession, {
+      expires: remember ? getSessionExpirationDate() : undefined,
+    })
   );
 
   return redirect("/", { headers });
@@ -153,6 +158,10 @@ const SignupRoute = () => {
         errors={fields.confirmPassword.errors}
         errorId={fields.confirmPassword.errorId}
         autoComplete="new-password"
+      />
+
+      <CheckboxField
+        {...getInputProps(fields.remember, { type: "checkbox" })}
       />
 
       <ErrorList errors={form.errors} errorId={form.errorId} />

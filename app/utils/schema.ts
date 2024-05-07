@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { alphanumericWithUnderscore } from "#app/utils/regex";
+import { remember } from "@epic-web/remember";
 
 const username = z
   .string({ required_error: "Username is required" })
@@ -45,6 +46,7 @@ const PasswordAndConfirmPasswordSchema = z
 export const LoginSchema = z.object({
   username,
   password,
+  remember: z.boolean().optional(),
 });
 
 export const SignupSchema = z
@@ -52,6 +54,7 @@ export const SignupSchema = z
     email,
     username,
     name,
+    remember: z.boolean().optional(),
   })
   .and(PasswordAndConfirmPasswordSchema);
 
