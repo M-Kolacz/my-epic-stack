@@ -3,7 +3,12 @@ import { Form, useActionData } from "@remix-run/react";
 import { LoginSchema } from "#app/utils/schema";
 import { useForm, getFormProps, getInputProps } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod";
-import { ActionFunctionArgs, json, redirect } from "@remix-run/node";
+import {
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
+  json,
+  redirect,
+} from "@remix-run/node";
 import { Field, ErrorList, CheckboxField } from "#app/components/form";
 import { HoneypotInputs } from "remix-utils/honeypot/react";
 import { checkHoneypot } from "#app/utils/honeypot.server";
@@ -12,12 +17,23 @@ import { checkCsrf } from "#app/utils/csrf.server";
 import { getPath } from "#app/utils/server";
 import { createToastCookie } from "#app/utils/toast.server";
 import { createConfettiCookie } from "#app/utils/confetti.server";
-import { prisma } from "#app/utils/db.server";
 import { z } from "zod";
 import { authSessionStorage } from "#app/utils/authSession.server";
-import { getSessionExpirationDate, login } from "#app/utils/auth.server";
+import {
+  getSessionExpirationDate,
+  login,
+  requireAnonymous,
+} from "#app/utils/auth.server";
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  await requireAnonymous(request);
+
+  return json({});
+};
 
 export const action = async ({ request }: ActionFunctionArgs) => {
+  await requireAnonymous(request);
+
   await checkCsrf(request);
   const formData = await request.formData();
   checkHoneypot(formData, getPath(request));

@@ -32,6 +32,14 @@ export const getUserId = async (request: Request) => {
   return user.id;
 };
 
+export const requireAnonymous = async (request: Request) => {
+  const userId = await getUserId(request);
+
+  if (userId) {
+    throw redirect("/");
+  }
+};
+
 export const logout = async (
   {
     request,

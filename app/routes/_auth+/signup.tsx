@@ -4,19 +4,35 @@ import { Button } from "#app/components/ui/button";
 import { getFormProps, getInputProps, useForm } from "@conform-to/react";
 import { SignupSchema } from "#app/utils/schema";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod";
-import { ActionFunctionArgs, json, redirect } from "@remix-run/node";
+import {
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
+  json,
+  redirect,
+} from "@remix-run/node";
 import { HoneypotInputs } from "remix-utils/honeypot/react";
 import { AuthenticityTokenInput } from "remix-utils/csrf/react";
 import { checkCsrf } from "#app/utils/csrf.server";
 import { checkHoneypot } from "#app/utils/honeypot.server";
 import { getPath } from "#app/utils/server";
 import { prisma } from "#app/utils/db.server";
-import { getSessionExpirationDate, signup } from "#app/utils/auth.server";
+import {
+  getSessionExpirationDate,
+  requireAnonymous,
+  signup,
+} from "#app/utils/auth.server";
 import { createConfettiCookie } from "#app/utils/confetti.server";
 import { createToastCookie } from "#app/utils/toast.server";
 import { authSessionStorage } from "#app/utils/authSession.server";
 
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  await requireAnonymous(request);
+
+  return json({});
+};
+
 export const action = async ({ request }: ActionFunctionArgs) => {
+  await requireAnonymous(request);
   await checkCsrf(request);
   const formData = await request.formData();
   checkHoneypot(formData, getPath(request));
