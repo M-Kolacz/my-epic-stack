@@ -3,7 +3,6 @@ import {
   LinksFunction,
   LoaderFunctionArgs,
   json,
-  redirect,
 } from "@remix-run/node";
 import {
   Form,
@@ -39,7 +38,6 @@ import { useToast } from "./components/toaster";
 import { getToast } from "./utils/toast.server";
 import { Confetti } from "./components/confetti";
 import { getConfettiId } from "./utils/confetti.server";
-import { authSessionStorage } from "./utils/authSession.server";
 import { prisma } from "./utils/db.server";
 import { Avatar, AvatarFallback, AvatarImage } from "#app/components/ui/avatar";
 import { useOptionalUser } from "./utils/user";
@@ -53,6 +51,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "./components/ui/alert-dialog";
+import { getUserId } from "./utils/auth.server";
 
 export const links: LinksFunction = () => {
   return [
@@ -65,24 +64,10 @@ export const links: LinksFunction = () => {
 };
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const authSession = await authSessionStorage.getSession(
-    request.headers.get("cookie")
-  );
-  const userId = authSession.get("userId");
+  const userId = await getUserId(request);
   const user = userId
     ? await prisma.user.findUnique({ where: { id: userId } })
     : null;
-
-  if (userId && !user) {
-    // The user doesn't exist in the database anymore, so we should log them out
-    const headers = new Headers();
-    headers.append(
-      "set-cookie",
-      await authSessionStorage.destroySession(authSession)
-    );
-
-    throw redirect("/", { headers });
-  }
 
   const headers = new Headers();
 

@@ -11,11 +11,10 @@ import { checkCsrf } from "#app/utils/csrf.server";
 import { checkHoneypot } from "#app/utils/honeypot.server";
 import { getPath } from "#app/utils/server";
 import { prisma } from "#app/utils/db.server";
-import { bcrypt, getSessionExpirationDate } from "#app/utils/auth.server";
+import { getSessionExpirationDate, signup } from "#app/utils/auth.server";
 import { createConfettiCookie } from "#app/utils/confetti.server";
 import { createToastCookie } from "#app/utils/toast.server";
 import { authSessionStorage } from "#app/utils/authSession.server";
-import { remember } from "@epic-web/remember";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   await checkCsrf(request);
@@ -45,22 +44,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
               message: "An account with this username already exists",
             });
         });
-      }).transform(async (data, ctx) => {
+      }).transform(async (data) => {
         if (intent !== null) return { ...data, user: null };
 
-        const user = await prisma.user.create({
-          data: {
-            email: data.email,
-            username: data.username,
-            name: data.name,
-            password: {
-              create: {
-                hash: await bcrypt.hash(data.password, 10),
-              },
-            },
-          },
-          select: { id: true },
-        });
+        const user = await signup(data);
 
         return { ...data, user };
       }),
