@@ -46,6 +46,7 @@ export const LoginSchema = z.object({
   username,
   password,
   remember: z.boolean().optional(),
+  redirectTo: z.string().optional(),
 });
 
 export const SignupSchema = z

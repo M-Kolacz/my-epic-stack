@@ -39,16 +39,24 @@ export const requireAnonymous = async (request: Request) => {
   }
 };
 
-export const requireUserId = async (request: Request) => {
+export const requireUserId = async (request: Request, redirectTo?: string) => {
   const userId = await getUserId(request);
+
   if (!userId) {
-    throw redirect("/login");
+    const url = new URL(request.url);
+
+    const searchParams = new URLSearchParams({
+      redirectTo: redirectTo ? redirectTo : `${url.pathname}${url.search}`,
+    });
+
+    throw redirect(`/login?${searchParams}`);
   }
+
   return userId;
 };
 
 export const requireUser = async (request: Request) => {
-  const userId = await getUserId(request);
+  const userId = await requireUserId(request);
 
   const user = userId
     ? await prisma.user.findUnique({
@@ -58,7 +66,7 @@ export const requireUser = async (request: Request) => {
     : null;
 
   if (!user) {
-    throw await logout({ request, redirectTo: "/login" });
+    throw logout({ request, redirectTo: "/login" });
   }
 
   return user;

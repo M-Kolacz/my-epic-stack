@@ -1,5 +1,5 @@
 import { Button } from "#app/components/ui/button";
-import { Form, useActionData } from "@remix-run/react";
+import { Form, useActionData, useSearchParams } from "@remix-run/react";
 import { LoginSchema } from "#app/utils/schema";
 import { useForm, getFormProps, getInputProps } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod";
@@ -24,6 +24,7 @@ import {
   login,
   requireAnonymous,
 } from "#app/utils/auth.server";
+import { safeRedirect } from "remix-utils/safe-redirect";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await requireAnonymous(request);
@@ -67,7 +68,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  const { remember, user } = submission.value;
+  const { remember, user, redirectTo } = submission.value;
 
   const headers = new Headers();
 
@@ -93,17 +94,23 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     })
   );
 
-  return redirect("/users", {
+  return redirect(safeRedirect(redirectTo, "/"), {
     headers,
   });
 };
 
 const LoginRoute = () => {
   const actionData = useActionData<typeof action>();
+  const [searchParams] = useSearchParams();
+
+  const redirectTo = searchParams.get("redirectTo");
 
   const [form, fields] = useForm({
     id: "login-form",
     constraint: getZodConstraint(LoginSchema),
+    defaultValue: {
+      redirectTo,
+    },
     lastResult: actionData?.result,
     onValidate: ({ formData }) =>
       parseWithZod(formData, { schema: LoginSchema }),
@@ -132,6 +139,8 @@ const LoginRoute = () => {
       <CheckboxField
         {...getInputProps(fields.remember, { type: "checkbox" })}
       />
+
+      <input {...getInputProps(fields.redirectTo, { type: "hidden" })} />
 
       <ErrorList errors={form.errors} errorId={form.errorId} />
       <Button type="submit">Submit</Button>
