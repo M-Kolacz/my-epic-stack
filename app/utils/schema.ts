@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { alphanumericWithUnderscore } from "#app/utils/regex";
-import { remember } from "@epic-web/remember";
 
 const username = z
   .string({ required_error: "Username is required" })
@@ -47,6 +46,7 @@ export const LoginSchema = z.object({
   username,
   password,
   remember: z.boolean().optional(),
+  redirectTo: z.string().optional(),
 });
 
 export const SignupSchema = z
@@ -60,4 +60,15 @@ export const SignupSchema = z
 
 export const ThemeSchema = z.object({
   theme: z.enum(["light", "dark"]),
+});
+
+export const DeleteNoteSchema = z.object({
+  intent: z.enum(["delete-note"]),
+  noteId: z.string(),
+});
+
+export const EditNoteSchema = z.object({
+  title: z.string().min(3).max(100),
+  content: z.string().min(3).max(1000),
+  intent: z.enum(["edit-note"]),
 });
