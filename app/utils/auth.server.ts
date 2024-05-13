@@ -122,6 +122,7 @@ export const signup = async ({
       email,
       username,
       name,
+      roles: { connect: { name: "user" } },
       password: {
         create: {
           hash,
