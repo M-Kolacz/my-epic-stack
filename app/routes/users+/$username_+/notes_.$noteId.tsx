@@ -10,13 +10,15 @@ import { ErrorList } from "#app/components/form";
 import { AuthenticityTokenInput } from "remix-utils/csrf/react";
 import { checkCsrf } from "#app/utils/csrf.server";
 import { redirectWithToast } from "#app/utils/toast.server";
-import { useOptionalUser } from "#app/utils/user";
 import { requireUserId } from "#app/utils/auth.server";
 import { Link } from "#app/components/link";
+import { requireUserWithPermission } from "#app/utils/permissions.server";
+import { useOptionalUser, userHasPermission } from "#app/utils/user";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const note = await prisma.note.findUnique({
     where: { id: params.noteId },
+    select: { id: true, title: true, content: true, ownerId: true },
   });
 
   invariantResponse(note, "Note not found", {
@@ -31,6 +33,7 @@ const intentName = {
 };
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
+  const userId = await requireUserId(request);
   await checkCsrf(request);
 
   const formData = await request.formData();
@@ -55,13 +58,16 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
   invariantResponse(note, "Note not found", { status: 404 });
 
-  const userId = await requireUserId(request);
+  const isNoteOwner = note.ownerId === userId;
 
-  invariantResponse(
-    userId === note.ownerId,
-    "You are not the owner of this note",
-    { status: 403 }
+  const permission = await requireUserWithPermission(
+    request,
+    isNoteOwner ? "delete:note:own" : "delete:note:any"
   );
+
+  invariantResponse(permission, "You are not allowed to delete this note", {
+    status: 403,
+  });
 
   await prisma.note.delete({ where: { id: noteId } });
 
@@ -77,7 +83,12 @@ const NoteIdRoute = () => {
   const data = useLoaderData<typeof loader>();
   const user = useOptionalUser();
 
-  const isNoteOwner = user?.id === data.note.ownerId;
+  const isOwner = user?.id === data.note.ownerId;
+
+  const canDelete = userHasPermission(
+    user,
+    isOwner ? "delete:note:own" : "delete:note:any"
+  );
 
   return (
     <div className="max-w-3xl">
@@ -86,7 +97,7 @@ const NoteIdRoute = () => {
       <p>{data.note.content}</p>
 
       <div
-        data-hidden={!isNoteOwner}
+        data-hidden={!canDelete}
         className="flex justify-end gap-4 mt-4 data-[hidden=true]:hidden"
       >
         <DeleteNoteForm />

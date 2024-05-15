@@ -66,7 +66,24 @@ export const links: LinksFunction = () => {
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const userId = await getUserId(request);
   const user = userId
-    ? await prisma.user.findUnique({ where: { id: userId } })
+    ? await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          createdAt: true,
+          name: true,
+          email: true,
+          username: true,
+          roles: {
+            select: {
+              name: true,
+              permissions: {
+                select: { access: true, action: true, entity: true },
+              },
+            },
+          },
+        },
+      })
     : null;
 
   const headers = new Headers();
