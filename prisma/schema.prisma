@@ -19,6 +19,7 @@ model User {
   notes    Note[]
   roles    Role[]
   password Password?
+  sessions Session[]
 }
 
 model Note {
@@ -68,4 +69,18 @@ model Permission {
   roles Role[]
 
   @@unique([action, entity, access])
+}
+
+model Session {
+  id String @id @default(cuid())
+
+  expirationDate DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String
+
+  @@index([userId])
 }
