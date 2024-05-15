@@ -42,11 +42,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const submission = await parseWithZod(formData, {
     schema: (intent) =>
       LoginSchema.transform(async (data, ctx) => {
-        if (intent !== null) return { ...data, user: null };
+        if (intent !== null) return { ...data, session: null };
 
-        const user = await login(data);
+        const session = await login(data);
 
-        if (!user) {
+        if (!session) {
           ctx.addIssue({
             code: "custom",
             message: "Invalid username or password",
@@ -54,12 +54,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           return z.NEVER;
         }
 
-        return { ...data, user: { id: user.id } };
+        return { ...data, session };
       }),
     async: true,
   });
 
-  if (submission.status !== "success" || !submission.value.user) {
+  if (submission.status !== "success" || !submission.value.session) {
     return json(
       { result: submission.reply({ hideFields: ["password"] }) },
       {
@@ -68,7 +68,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  const { remember, user, redirectTo } = submission.value;
+  const { remember, session, redirectTo } = submission.value;
 
   const headers = new Headers();
 
@@ -86,11 +86,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const authSession = await authSessionStorage.getSession(
     request.headers.get("cookie")
   );
-  authSession.set("userId", user.id);
+  authSession.set("sessionId", session.id);
   headers.append(
     "set-cookie",
     await authSessionStorage.commitSession(authSession, {
-      expires: remember ? getSessionExpirationDate() : undefined,
+      expires: remember ? session.expirationDate : undefined,
     })
   );
 

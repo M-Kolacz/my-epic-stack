@@ -1,7 +1,7 @@
 import { createCookieSessionStorage } from "@remix-run/node";
 
 export const authSessionStorage = createCookieSessionStorage<{
-  userId: string;
+  sessionId: string;
 }>({
   cookie: {
     name: "my-epic-auth-session",
