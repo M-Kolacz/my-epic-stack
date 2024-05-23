@@ -61,16 +61,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             });
         });
       }).transform(async (data) => {
-        if (intent !== null) return { ...data, user: null };
+        if (intent !== null) return { ...data, session: null };
 
-        const user = await signup(data);
+        const session = await signup(data);
 
-        return { ...data, user };
+        return { ...data, session };
       }),
     async: true,
   });
 
-  if (submission.status !== "success" || !submission.value.user) {
+  if (submission.status !== "success" || !submission.value.session) {
     return json(
       {
         result: submission.reply({
@@ -83,7 +83,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  const { user, remember } = submission.value;
+  const { session, remember } = submission.value;
 
   const headers = new Headers();
 
@@ -101,11 +101,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const authSession = await authSessionStorage.getSession(
     request.headers.get("cookie")
   );
-  authSession.set("userId", user.id);
+  authSession.set("sessionId", session.id);
   headers.append(
     "set-cookie",
     await authSessionStorage.commitSession(authSession, {
-      expires: remember ? getSessionExpirationDate() : undefined,
+      expires: remember ? session.expirationDate : undefined,
     })
   );
 

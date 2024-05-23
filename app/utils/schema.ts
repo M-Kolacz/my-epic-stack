@@ -72,3 +72,7 @@ export const EditNoteSchema = z.object({
   content: z.string().min(3).max(1000),
   intent: z.enum(["edit-note"]),
 });
+
+export const DeleteAllSessionsSchema = z.object({
+  intent: z.enum(["delete-all-sessions"]),
+});
