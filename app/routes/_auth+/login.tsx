@@ -25,9 +25,16 @@ import {
   requireAnonymous,
 } from "#app/utils/auth.server";
 import { safeRedirect } from "remix-utils/safe-redirect";
+import { sendEmail } from "#app/utils/email.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await requireAnonymous(request);
+
+  await sendEmail({
+    to: "michal.kolacz45@gmail.com",
+    subject: "Hello world",
+    html: "<h1>Hello world</h1>",
+  });
 
   return json({});
 };
