@@ -1,4 +1,4 @@
-import { Form, useActionData } from "@remix-run/react";
+import { Form, useActionData, useLoaderData } from "@remix-run/react";
 import { Field, ErrorList, CheckboxField } from "#app/components/form";
 import { Button } from "#app/components/ui/button";
 import { getFormProps, getInputProps, useForm } from "@conform-to/react";
@@ -16,19 +16,24 @@ import { checkCsrf } from "#app/utils/csrf.server";
 import { checkHoneypot } from "#app/utils/honeypot.server";
 import { getPath } from "#app/utils/server";
 import { prisma } from "#app/utils/db.server";
-import {
-  getSessionExpirationDate,
-  requireAnonymous,
-  signup,
-} from "#app/utils/auth.server";
+import { requireAnonymous, signup } from "#app/utils/auth.server";
 import { createConfettiCookie } from "#app/utils/confetti.server";
 import { createToastCookie } from "#app/utils/toast.server";
 import { authSessionStorage } from "#app/utils/authSession.server";
+import { verifySessionStorage } from "#app/utils/verifySession.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await requireAnonymous(request);
 
-  return json({});
+  const verifySession = await verifySessionStorage.getSession(
+    request.headers.get("cookie")
+  );
+
+  const email = verifySession.get("email");
+
+  if (!email) throw redirect("/signup");
+
+  return json({ email });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -109,11 +114,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     })
   );
 
+  const verifySession = await verifySessionStorage.getSession(
+    request.headers.get("cookie")
+  );
+  headers.append(
+    "set-cookie",
+    await verifySessionStorage.destroySession(verifySession)
+  );
+
   return redirect("/", { headers });
 };
 
 const SignupRoute = () => {
   const actionData = useActionData<typeof action>();
+  const { email } = useLoaderData<typeof loader>();
 
   const [form, fields] = useForm({
     id: "signup-form",
@@ -126,6 +140,7 @@ const SignupRoute = () => {
 
   return (
     <Form method="POST" {...getFormProps(form)} className="flex gap-4 flex-col">
+      <h1>Hello {email}</h1>
       <Field
         {...getInputProps(fields.email, { type: "email" })}
         label="Email"

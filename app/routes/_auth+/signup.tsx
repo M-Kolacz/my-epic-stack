@@ -25,6 +25,7 @@ import { createConfettiCookie } from "#app/utils/confetti.server";
 import { createToastCookie } from "#app/utils/toast.server";
 import { authSessionStorage } from "#app/utils/authSession.server";
 import { sendEmail } from "#app/utils/email.server";
+import { verifySessionStorage } from "#app/utils/verifySession.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await requireAnonymous(request);
@@ -76,8 +77,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     html: "<h1>Welcome to Conform-to</h1>",
   });
 
+  const headers = new Headers();
+
   if (response.status === "success") {
-    return redirect("/onboarding");
+    const verifySession = await verifySessionStorage.getSession(
+      request.headers.get("cookie")
+    );
+    verifySession.set("email", email);
+
+    headers.append(
+      "set-cookie",
+      await verifySessionStorage.commitSession(verifySession)
+    );
+
+    return redirect("/onboarding", { headers });
   } else {
     return json(
       {
