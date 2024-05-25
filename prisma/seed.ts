@@ -10,6 +10,54 @@ const seed = async () => {
   await cleanupDb();
   console.timeEnd("🧹 Cleanup database");
 
+  console.time("🗝️  Create permissions...");
+  const entities = ["user", "note"];
+  const actions = ["create", "read", "update", "delete"];
+  const accesses = ["own", "any"] as const;
+
+  const permissionsToCreate = [];
+
+  for (const entity of entities) {
+    for (const action of actions) {
+      for (const access of accesses) {
+        permissionsToCreate.push({
+          entity,
+          action,
+          access,
+        });
+      }
+    }
+  }
+
+  await prisma.permission.createMany({ data: permissionsToCreate });
+  console.timeEnd("🗝️  Create permissions...");
+
+  console.time("👑 Create roles...");
+  await prisma.role.create({
+    data: {
+      name: "admin",
+      permissions: {
+        connect: await prisma.permission.findMany({
+          select: { id: true },
+          where: { access: "any" },
+        }),
+      },
+    },
+  });
+
+  await prisma.role.create({
+    data: {
+      name: "user",
+      permissions: {
+        connect: await prisma.permission.findMany({
+          select: { id: true },
+          where: { access: "own" },
+        }),
+      },
+    },
+  });
+  console.timeEnd("👑 Create roles...");
+
   const totalUsers = 5;
   console.time(`👥 Create ${totalUsers} users`);
 
@@ -19,6 +67,7 @@ const seed = async () => {
     await prisma.user.create({
       data: {
         ...userData,
+        roles: { connect: { name: "user" } },
         password: {
           create: await createPassword(userData.username),
         },
@@ -43,8 +92,9 @@ const seed = async () => {
       email: "kody@gmail.com",
       name: "Kody",
       username: "kody",
+      roles: { connect: [{ name: "user" }, { name: "admin" }] },
       password: {
-        create: await createPassword("kody"),
+        create: await createPassword("kodylovesyou"),
       },
       notes: {
         create: Array.from({

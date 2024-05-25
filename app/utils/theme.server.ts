@@ -2,7 +2,7 @@ import { parse, serialize } from "cookie";
 
 export type Theme = "light" | "dark";
 
-const cookieName = "theme";
+const cookieName = "my-epic-theme";
 const defaultTheme = "light";
 
 export const getTheme = (request: Request) => {

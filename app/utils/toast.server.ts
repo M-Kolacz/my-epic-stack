@@ -13,7 +13,7 @@ export const toastSessionStorage = createCookieSessionStorage<
   Record<typeof toastKey, Toast>
 >({
   cookie: {
-    name: "toast",
+    name: "my-epic-toast",
     httpOnly: true,
     sameSite: "lax",
     path: "/",

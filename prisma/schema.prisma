@@ -17,7 +17,9 @@ model User {
   updatedAt DateTime @updatedAt
 
   notes    Note[]
+  roles    Role[]
   password Password?
+  sessions Session[]
 }
 
 model Note {
@@ -40,4 +42,45 @@ model Password {
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId String @unique
+}
+
+model Role {
+  id          String @id @default(cuid())
+  name        String @unique
+  description String @default("")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  permissions Permission[]
+  users       User[]
+}
+
+model Permission {
+  id          String @id @default(cuid())
+  action      String // e.g create, read, update, delete
+  entity      String // e.g user, note
+  access      String // e.g own, any
+  description String @default("")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  roles Role[]
+
+  @@unique([action, entity, access])
+}
+
+model Session {
+  id String @id @default(cuid())
+
+  expirationDate DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String
+
+  @@index([userId])
 }

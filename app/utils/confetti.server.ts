@@ -8,7 +8,7 @@ export const confettiSessionStorage = createCookieSessionStorage<
   Record<typeof confettiId, ConfettiId>
 >({
   cookie: {
-    name: "confetti",
+    name: "my-epic-confetti",
     httpOnly: true,
     sameSite: "lax",
     path: "/",

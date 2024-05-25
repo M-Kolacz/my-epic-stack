@@ -1,10 +1,15 @@
 import { Button } from "#app/components/ui/button";
-import { Form, useActionData } from "@remix-run/react";
+import { Form, useActionData, useSearchParams } from "@remix-run/react";
 import { LoginSchema } from "#app/utils/schema";
 import { useForm, getFormProps, getInputProps } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod";
-import { ActionFunctionArgs, json, redirect } from "@remix-run/node";
-import { Field } from "#app/components/form";
+import {
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
+  json,
+  redirect,
+} from "@remix-run/node";
+import { Field, ErrorList, CheckboxField } from "#app/components/form";
 import { HoneypotInputs } from "remix-utils/honeypot/react";
 import { checkHoneypot } from "#app/utils/honeypot.server";
 import { AuthenticityTokenInput } from "remix-utils/csrf/react";
@@ -12,11 +17,31 @@ import { checkCsrf } from "#app/utils/csrf.server";
 import { getPath } from "#app/utils/server";
 import { createToastCookie } from "#app/utils/toast.server";
 import { createConfettiCookie } from "#app/utils/confetti.server";
-import { prisma } from "#app/utils/db.server";
 import { z } from "zod";
 import { authSessionStorage } from "#app/utils/authSession.server";
+import {
+  getSessionExpirationDate,
+  login,
+  requireAnonymous,
+} from "#app/utils/auth.server";
+import { safeRedirect } from "remix-utils/safe-redirect";
+import { sendEmail } from "#app/utils/email.server";
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  await requireAnonymous(request);
+
+  await sendEmail({
+    to: "michal.kolacz45@gmail.com",
+    subject: "Hello world",
+    html: "<h1>Hello world</h1>",
+  });
+
+  return json({});
+};
 
 export const action = async ({ request }: ActionFunctionArgs) => {
+  await requireAnonymous(request);
+
   await checkCsrf(request);
   const formData = await request.formData();
   checkHoneypot(formData, getPath(request));
@@ -24,13 +49,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const submission = await parseWithZod(formData, {
     schema: (intent) =>
       LoginSchema.transform(async (data, ctx) => {
-        if (intent !== null) return { ...data, user: null };
+        if (intent !== null) return { ...data, session: null };
 
-        const user = await prisma.user.findUnique({
-          where: { username: data.username },
-        });
+        const session = await login(data);
 
-        if (!user) {
+        if (!session) {
           ctx.addIssue({
             code: "custom",
             message: "Invalid username or password",
@@ -38,12 +61,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           return z.NEVER;
         }
 
-        return { ...data, user };
+        return { ...data, session };
       }),
     async: true,
   });
 
-  if (submission.status !== "success" || !submission.value.user) {
+  if (submission.status !== "success" || !submission.value.session) {
     return json(
       { result: submission.reply({ hideFields: ["password"] }) },
       {
@@ -51,6 +74,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       }
     );
   }
+
+  const { remember, session, redirectTo } = submission.value;
 
   const headers = new Headers();
 
@@ -68,32 +93,39 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const authSession = await authSessionStorage.getSession(
     request.headers.get("cookie")
   );
-  authSession.set("userId", submission.value.user.id);
+  authSession.set("sessionId", session.id);
   headers.append(
     "set-cookie",
-    await authSessionStorage.commitSession(authSession)
+    await authSessionStorage.commitSession(authSession, {
+      expires: remember ? session.expirationDate : undefined,
+    })
   );
 
-  return redirect("/users", {
+  return redirect(safeRedirect(redirectTo, "/"), {
     headers,
   });
 };
 
 const LoginRoute = () => {
   const actionData = useActionData<typeof action>();
+  const [searchParams] = useSearchParams();
+
+  const redirectTo = searchParams.get("redirectTo");
 
   const [form, fields] = useForm({
     id: "login-form",
     constraint: getZodConstraint(LoginSchema),
-    lastResult: actionData?.result,
-    onValidate: ({ formData }) => {
-      return parseWithZod(formData, { schema: LoginSchema });
+    defaultValue: {
+      redirectTo,
     },
+    lastResult: actionData?.result,
+    onValidate: ({ formData }) =>
+      parseWithZod(formData, { schema: LoginSchema }),
     shouldValidate: "onBlur",
   });
 
   return (
-    <Form method="POST" {...getFormProps(form)}>
+    <Form method="POST" {...getFormProps(form)} className="flex gap-4 flex-col">
       <Field
         {...getInputProps(fields.username, { type: "text" })}
         errors={fields.username.errors}
@@ -111,6 +143,13 @@ const LoginRoute = () => {
         autoComplete="current-password"
       />
 
+      <CheckboxField
+        {...getInputProps(fields.remember, { type: "checkbox" })}
+      />
+
+      <input {...getInputProps(fields.redirectTo, { type: "hidden" })} />
+
+      <ErrorList errors={form.errors} errorId={form.errorId} />
       <Button type="submit">Submit</Button>
 
       <HoneypotInputs />
