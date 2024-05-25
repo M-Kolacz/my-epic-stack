@@ -1,6 +1,6 @@
-import { Link } from '#app/components/link';
-import { prisma } from '#app/utils/db.server';
-import { json, useLoaderData } from '@remix-run/react';
+import { json, useLoaderData } from "@remix-run/react";
+import { Link } from "#app/components/link";
+import { prisma } from "#app/utils/db.server";
 
 export const loader = async () => {
 	const users = await prisma.user.findMany({ select: { username: true } });
@@ -13,12 +13,12 @@ const UsersIndexRoute = () => {
 
 	return (
 		<div>
-			<h1 className='text-5xl'>Users 👥</h1>
+			<h1 className="text-5xl">Users 👥</h1>
 
-			<ul className='flex flex-col gap-4 pt-6'>
+			<ul className="flex flex-col gap-4 pt-6">
 				{data.users.map((user) => (
 					<li key={user.username}>
-						<Link to={user.username} relative='path'>
+						<Link to={user.username} relative="path">
 							👤 {user.username}
 						</Link>
 					</li>

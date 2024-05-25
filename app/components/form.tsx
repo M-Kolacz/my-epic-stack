@@ -1,20 +1,20 @@
-import { Label } from '#app/components/ui/label';
-import { Input, InputProps } from '#app/components/ui/input';
-import { Checkbox } from '#app/components/ui/checkbox';
-import { FormMetadata, getInputProps } from '@conform-to/react';
+import { type FormMetadata, type getInputProps } from "@conform-to/react";
+import { Checkbox } from "#app/components/ui/checkbox";
+import { Input, type InputProps } from "#app/components/ui/input";
+import { Label } from "#app/components/ui/label";
 
 export const ErrorList = ({
 	errorId,
 	errors,
 }: {
-	errors: FormMetadata['errors'];
-	errorId: FormMetadata['errorId'];
+	errors: FormMetadata["errors"];
+	errorId: FormMetadata["errorId"];
 }) => {
 	return errors ? (
 		<ul id={errorId}>
 			{errors.map((error) => {
 				return (
-					<li className='text-red-500' key={error}>
+					<li className="text-red-500" key={error}>
 						{error}
 					</li>
 				);
@@ -48,7 +48,7 @@ type CheckboxProps = ReturnType<typeof getInputProps>;
 
 export const CheckboxField = ({ type, ...checkboxProps }: CheckboxProps) => {
 	return (
-		<div className='flex flex-row items-center gap-2'>
+		<div className="flex flex-row items-center gap-2">
 			<Checkbox {...checkboxProps} />
 			<label htmlFor={checkboxProps.id}>Remember me</label>
 		</div>

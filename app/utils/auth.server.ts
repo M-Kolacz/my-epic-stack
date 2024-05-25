@@ -1,9 +1,9 @@
-import bcrypt from 'bcryptjs';
-import { authSessionStorage } from '#app/utils/authSession.server';
-import { prisma } from '#app/utils/db.server';
-import { safeRedirect } from 'remix-utils/safe-redirect';
-import { redirect } from '@remix-run/node';
-import { type User } from '@prisma/client';
+import { type User } from "@prisma/client";
+import { redirect } from "@remix-run/node";
+import bcrypt from "bcryptjs";
+import { safeRedirect } from "remix-utils/safe-redirect";
+import { authSessionStorage } from "#app/utils/authSession.server";
+import { prisma } from "#app/utils/db.server";
 
 /**
  * The expiration time for a session, in milliseconds.
@@ -16,9 +16,9 @@ export const getSessionExpirationDate = () =>
 
 export const getUserId = async (request: Request) => {
 	const authSession = await authSessionStorage.getSession(
-		request.headers.get('cookie'),
+		request.headers.get("cookie"),
 	);
-	const sessionId = authSession.get('sessionId');
+	const sessionId = authSession.get("sessionId");
 	if (!sessionId) return null;
 
 	const session = await prisma.session.findUnique({
@@ -36,7 +36,7 @@ export const getUserId = async (request: Request) => {
 export const requireAnonymous = async (request: Request) => {
 	const userId = await getUserId(request);
 	if (userId) {
-		throw redirect('/');
+		throw redirect("/");
 	}
 };
 
@@ -69,7 +69,7 @@ export const requireUser = async (request: Request) => {
 		: null;
 
 	if (!user) {
-		throw logout({ request, redirectTo: '/login' });
+		throw logout({ request, redirectTo: "/login" });
 	}
 
 	return user;
@@ -78,7 +78,7 @@ export const requireUser = async (request: Request) => {
 export const logout = async (
 	{
 		request,
-		redirectTo = '/',
+		redirectTo = "/",
 	}: {
 		request: Request;
 		redirectTo?: string;
@@ -86,21 +86,21 @@ export const logout = async (
 	responseInit?: ResponseInit,
 ) => {
 	const authSession = await authSessionStorage.getSession(
-		request.headers.get('cookie'),
+		request.headers.get("cookie"),
 	);
 
-	const sessionId = authSession.get('sessionId');
+	const sessionId = authSession.get("sessionId");
 
 	sessionId &&
 		void prisma.session
 			.delete({ where: { id: sessionId } })
 			.catch((error) =>
-				console.error('⛓️‍💥 Unable to delete session', error),
+				console.error("⛓️‍💥 Unable to delete session", error),
 			);
 
 	const headers = new Headers(responseInit?.headers);
 	headers.append(
-		'set-cookie',
+		"set-cookie",
 		await authSessionStorage.destroySession(authSession),
 	);
 
@@ -115,7 +115,7 @@ export const login = async ({
 	username,
 	password,
 }: {
-	username: User['username'];
+	username: User["username"];
 	password: string;
 }) => {
 	const user = await verifyUserPassword({ username }, password);
@@ -140,7 +140,7 @@ export const signup = async ({
 	name,
 	username,
 	password,
-}: Pick<User, 'email' | 'username' | 'name'> & { password: string }) => {
+}: Pick<User, "email" | "username" | "name"> & { password: string }) => {
 	const hash = await getPasswordHash(password);
 
 	const newSession = await prisma.session.create({
@@ -155,7 +155,7 @@ export const signup = async ({
 					email,
 					username,
 					name,
-					roles: { connect: { name: 'user' } },
+					roles: { connect: { name: "user" } },
 					password: {
 						create: {
 							hash,
@@ -170,7 +170,7 @@ export const signup = async ({
 };
 
 export const verifyUserPassword = async (
-	where: Pick<User, 'id'> | Pick<User, 'username'>,
+	where: Pick<User, "id"> | Pick<User, "username">,
 	password: string,
 ) => {
 	const userWithPassword = await prisma.user.findUnique({

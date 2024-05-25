@@ -1,7 +1,7 @@
-import { prisma } from '#app/utils/db.server';
-import { faker } from '@faker-js/faker';
-import { UniqueEnforcer } from 'enforce-unique';
-import bcrypt from 'bcryptjs';
+import { faker } from "@faker-js/faker";
+import bcrypt from "bcryptjs";
+import { UniqueEnforcer } from "enforce-unique";
+import { prisma } from "#app/utils/db.server";
 
 const uniqueUsernameEnforcer = new UniqueEnforcer();
 
@@ -13,12 +13,12 @@ export const createUser = async () => {
 		.enforce(
 			() =>
 				faker.string.alphanumeric({ length: 2 }) +
-				'_' +
+				"_" +
 				faker.internet.userName({ firstName, lastName }),
 		)
 		.slice(0, 20)
 		.toLocaleLowerCase()
-		.replace(/[^a-z0-9_]/g, '_');
+		.replace(/[^a-z0-9_]/g, "_");
 
 	return {
 		username,

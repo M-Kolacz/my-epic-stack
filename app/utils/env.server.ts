@@ -1,7 +1,7 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 const schema = z.object({
-	NODE_ENV: z.enum(['production', 'development', 'test'] as const),
+	NODE_ENV: z.enum(["production", "development", "test"] as const),
 	CSRF_SECRET: z.string(),
 	CSRF_SIGN_SECTER: z.string(),
 	HONEYPOT_SECRET: z.string(),
@@ -20,11 +20,11 @@ export const validateEnv = () => {
 
 	if (!parsed.success) {
 		console.error(
-			'❌ Invalid environment variables:',
+			"❌ Invalid environment variables:",
 			parsed.error.flatten().fieldErrors,
 		);
 
-		throw new Error('Invalid environment variables.');
+		throw new Error("Invalid environment variables.");
 	}
 };
 

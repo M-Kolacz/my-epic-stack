@@ -1,37 +1,37 @@
-import { Form, useActionData, useLoaderData } from '@remix-run/react';
-import { Field, ErrorList, CheckboxField } from '#app/components/form';
-import { Button } from '#app/components/ui/button';
-import { getFormProps, getInputProps, useForm } from '@conform-to/react';
-import { OnboardingSchema } from '#app/utils/schema';
-import { getZodConstraint, parseWithZod } from '@conform-to/zod';
+import { getFormProps, getInputProps, useForm } from "@conform-to/react";
+import { getZodConstraint, parseWithZod } from "@conform-to/zod";
 import {
-	ActionFunctionArgs,
-	LoaderFunctionArgs,
+	type ActionFunctionArgs,
+	type LoaderFunctionArgs,
 	json,
 	redirect,
-} from '@remix-run/node';
-import { HoneypotInputs } from 'remix-utils/honeypot/react';
-import { AuthenticityTokenInput } from 'remix-utils/csrf/react';
-import { checkCsrf } from '#app/utils/csrf.server';
-import { checkHoneypot } from '#app/utils/honeypot.server';
-import { getPath } from '#app/utils/server';
-import { prisma } from '#app/utils/db.server';
-import { requireAnonymous, signup } from '#app/utils/auth.server';
-import { createConfettiCookie } from '#app/utils/confetti.server';
-import { createToastCookie } from '#app/utils/toast.server';
-import { authSessionStorage } from '#app/utils/authSession.server';
-import { verifySessionStorage } from '#app/utils/verifySession.server';
+} from "@remix-run/node";
+import { Form, useActionData, useLoaderData } from "@remix-run/react";
+import { AuthenticityTokenInput } from "remix-utils/csrf/react";
+import { HoneypotInputs } from "remix-utils/honeypot/react";
+import { Field, ErrorList, CheckboxField } from "#app/components/form";
+import { Button } from "#app/components/ui/button";
+import { requireAnonymous, signup } from "#app/utils/auth.server";
+import { authSessionStorage } from "#app/utils/authSession.server";
+import { createConfettiCookie } from "#app/utils/confetti.server";
+import { checkCsrf } from "#app/utils/csrf.server";
+import { prisma } from "#app/utils/db.server";
+import { checkHoneypot } from "#app/utils/honeypot.server";
+import { OnboardingSchema } from "#app/utils/schema";
+import { getPath } from "#app/utils/server";
+import { createToastCookie } from "#app/utils/toast.server";
+import { verifySessionStorage } from "#app/utils/verifySession.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	await requireAnonymous(request);
 
 	const verifySession = await verifySessionStorage.getSession(
-		request.headers.get('cookie'),
+		request.headers.get("cookie"),
 	);
 
-	const email = verifySession.get('email');
+	const email = verifySession.get("email");
 
-	if (!email) throw redirect('/signup');
+	if (!email) throw redirect("/signup");
 
 	return json({ email });
 };
@@ -58,18 +58,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				existingUser.forEach((user) => {
 					user.email === data.email &&
 						ctx.addIssue({
-							code: 'custom',
-							path: ['email'],
+							code: "custom",
+							path: ["email"],
 							message:
-								'An account with this email already exists',
+								"An account with this email already exists",
 						});
 
 					user.username === data.username &&
 						ctx.addIssue({
-							code: 'custom',
-							path: ['username'],
+							code: "custom",
+							path: ["username"],
 							message:
-								'An account with this username already exists',
+								"An account with this username already exists",
 						});
 				});
 			}).transform(async (data) => {
@@ -82,15 +82,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		async: true,
 	});
 
-	if (submission.status !== 'success' || !submission.value.session) {
+	if (submission.status !== "success" || !submission.value.session) {
 		return json(
 			{
 				result: submission.reply({
-					hideFields: ['password', 'confirmPassword'],
+					hideFields: ["password", "confirmPassword"],
 				}),
 			},
 			{
-				status: submission.status === 'error' ? 400 : 200,
+				status: submission.status === "error" ? 400 : 200,
 			},
 		);
 	}
@@ -99,37 +99,37 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 	const headers = new Headers();
 
-	const confettiCookie = await createConfettiCookie('signup-success');
-	headers.append('set-cookie', confettiCookie);
+	const confettiCookie = await createConfettiCookie("signup-success");
+	headers.append("set-cookie", confettiCookie);
 
 	const toastCookie = await createToastCookie({
-		description: 'You have successfully signed up!',
-		id: 'signup-success',
-		title: 'Success!',
-		type: 'info',
+		description: "You have successfully signed up!",
+		id: "signup-success",
+		title: "Success!",
+		type: "info",
 	});
-	headers.append('set-cookie', toastCookie);
+	headers.append("set-cookie", toastCookie);
 
 	const authSession = await authSessionStorage.getSession(
-		request.headers.get('cookie'),
+		request.headers.get("cookie"),
 	);
-	authSession.set('sessionId', session.id);
+	authSession.set("sessionId", session.id);
 	headers.append(
-		'set-cookie',
+		"set-cookie",
 		await authSessionStorage.commitSession(authSession, {
 			expires: remember ? session.expirationDate : undefined,
 		}),
 	);
 
 	const verifySession = await verifySessionStorage.getSession(
-		request.headers.get('cookie'),
+		request.headers.get("cookie"),
 	);
 	headers.append(
-		'set-cookie',
+		"set-cookie",
 		await verifySessionStorage.destroySession(verifySession),
 	);
 
-	return redirect('/', { headers });
+	return redirect("/", { headers });
 };
 
 const SignupRoute = () => {
@@ -137,63 +137,63 @@ const SignupRoute = () => {
 	const { email } = useLoaderData<typeof loader>();
 
 	const [form, fields] = useForm({
-		id: 'signup-form',
+		id: "signup-form",
 		constraint: getZodConstraint(OnboardingSchema),
 		lastResult: actionData?.result,
 		onValidate: ({ formData }) =>
 			parseWithZod(formData, { schema: OnboardingSchema }),
-		shouldValidate: 'onBlur',
+		shouldValidate: "onBlur",
 	});
 
 	return (
 		<Form
-			method='POST'
+			method="POST"
 			{...getFormProps(form)}
-			className='flex flex-col gap-4'>
+			className="flex flex-col gap-4">
 			<h1>Hello {email}</h1>
 			<Field
-				{...getInputProps(fields.email, { type: 'email' })}
-				label='Email'
+				{...getInputProps(fields.email, { type: "email" })}
+				label="Email"
 				errors={fields.email.errors}
 				errorId={fields.email.errorId}
-				autoComplete='email'
+				autoComplete="email"
 				autoFocus
 			/>
 			<Field
-				{...getInputProps(fields.username, { type: 'text' })}
-				label='Username'
+				{...getInputProps(fields.username, { type: "text" })}
+				label="Username"
 				errors={fields.username.errors}
 				errorId={fields.username.errorId}
-				autoComplete='username'
+				autoComplete="username"
 			/>
 			<Field
-				{...getInputProps(fields.name, { type: 'text' })}
-				label='Name'
+				{...getInputProps(fields.name, { type: "text" })}
+				label="Name"
 				errors={fields.name.errors}
 				errorId={fields.name.errorId}
-				autoComplete='name'
+				autoComplete="name"
 			/>
 			<Field
-				{...getInputProps(fields.password, { type: 'password' })}
-				label='Password'
+				{...getInputProps(fields.password, { type: "password" })}
+				label="Password"
 				errors={fields.password.errors}
 				errorId={fields.password.errorId}
-				autoComplete='new-password'
+				autoComplete="new-password"
 			/>
 			<Field
-				{...getInputProps(fields.confirmPassword, { type: 'password' })}
-				label='Confirm password'
+				{...getInputProps(fields.confirmPassword, { type: "password" })}
+				label="Confirm password"
 				errors={fields.confirmPassword.errors}
 				errorId={fields.confirmPassword.errorId}
-				autoComplete='new-password'
+				autoComplete="new-password"
 			/>
 
 			<CheckboxField
-				{...getInputProps(fields.remember, { type: 'checkbox' })}
+				{...getInputProps(fields.remember, { type: "checkbox" })}
 			/>
 
 			<ErrorList errors={form.errors} errorId={form.errorId} />
-			<Button type='submit'>Signup</Button>
+			<Button type="submit">Signup</Button>
 
 			<HoneypotInputs />
 			<AuthenticityTokenInput />

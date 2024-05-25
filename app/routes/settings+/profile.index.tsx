@@ -1,13 +1,13 @@
-import { Button } from '#app/components/ui/button';
-import { requireUserId } from '#app/utils/auth.server';
-import { authSessionStorage } from '#app/utils/authSession.server';
-import { prisma } from '#app/utils/db.server';
-import { invariantResponse } from '#app/utils/invariant';
-import { DeleteAllSessionsSchema } from '#app/utils/schema';
-import { getFormProps, useForm } from '@conform-to/react';
-import { parseWithZod } from '@conform-to/zod';
-import { LoaderFunctionArgs, json } from '@remix-run/node';
-import { useFetcher, useLoaderData } from '@remix-run/react';
+import { getFormProps, useForm } from "@conform-to/react";
+import { parseWithZod } from "@conform-to/zod";
+import { type LoaderFunctionArgs, json } from "@remix-run/node";
+import { useFetcher, useLoaderData } from "@remix-run/react";
+import { Button } from "#app/components/ui/button";
+import { requireUserId } from "#app/utils/auth.server";
+import { authSessionStorage } from "#app/utils/authSession.server";
+import { prisma } from "#app/utils/db.server";
+import { invariantResponse } from "#app/utils/invariant";
+import { DeleteAllSessionsSchema } from "#app/utils/schema";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const userId = await requireUserId(request);
@@ -22,7 +22,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		},
 	});
 
-	invariantResponse(user, 'User not found', { status: 404 });
+	invariantResponse(user, "User not found", { status: 404 });
 
 	return json({ user });
 };
@@ -35,14 +35,14 @@ export const action = async ({ request }: LoaderFunctionArgs) => {
 		schema: DeleteAllSessionsSchema,
 	});
 
-	if (submission.status !== 'success') {
+	if (submission.status !== "success") {
 		return json({ lastResult: submission.reply() });
 	}
 
 	const authSession = await authSessionStorage.getSession(
-		request.headers.get('cookie'),
+		request.headers.get("cookie"),
 	);
-	const sessionId = authSession.get('sessionId');
+	const sessionId = authSession.get("sessionId");
 
 	await prisma.session.deleteMany({
 		where: { userId: userId, NOT: { id: sessionId } },
@@ -64,11 +64,11 @@ const ProfileIndexRoute = () => {
 					{data.user.sessions.map((session) => (
 						<li
 							key={session.id}
-							className='border-spacing-1 border-2 border-primary'>
+							className="border-spacing-1 border-2 border-primary">
 							<p>Session id: {session.id}</p>
 							<p>Created at: {session.createdAt.toString()}</p>
 							<p>
-								Expiration date:{' '}
+								Expiration date:{" "}
 								{session.expirationDate.toString()}
 							</p>
 						</li>
@@ -82,22 +82,22 @@ const ProfileIndexRoute = () => {
 export default ProfileIndexRoute;
 
 const DeleteAllSessions = () => {
-	const fetcher = useFetcher<typeof action>({ key: 'delete-all-sessions' });
+	const fetcher = useFetcher<typeof action>({ key: "delete-all-sessions" });
 
 	const [form] = useForm({
-		id: 'delete-all-sessions',
+		id: "delete-all-sessions",
 		lastResult: fetcher.data?.lastResult,
 		onValidate: ({ formData }) =>
 			parseWithZod(formData, { schema: DeleteAllSessionsSchema }),
 	});
 
 	return (
-		<fetcher.Form method='POST' {...getFormProps(form)}>
+		<fetcher.Form method="POST" {...getFormProps(form)}>
 			<Button
-				type='submit'
-				name='intent'
-				value='delete-all-sessions'
-				variant={'destructive'}>
+				type="submit"
+				name="intent"
+				value="delete-all-sessions"
+				variant={"destructive"}>
 				Delete other sessions
 			</Button>
 		</fetcher.Form>

@@ -1,10 +1,10 @@
-import { getErrorMessage } from '#app/utils/misc.tsx';
-import { ErrorResponse } from '@remix-run/node';
+import { type ErrorResponse } from "@remix-run/node";
 import {
 	isRouteErrorResponse,
 	useParams,
 	useRouteError,
-} from '@remix-run/react';
+} from "@remix-run/react";
+import { getErrorMessage } from "#app/utils/misc.tsx";
 
 type StatusHandler = (info: {
 	error: ErrorResponse;
@@ -27,12 +27,12 @@ export const GeneralErrorBoundary = ({
 	const error = useRouteError();
 	const params = useParams();
 
-	if (typeof document !== 'undefined') {
+	if (typeof document !== "undefined") {
 		console.error(error);
 	}
 
 	return (
-		<div className='container flex items-center justify-center p-20 text-2xl'>
+		<div className="container flex items-center justify-center p-20 text-2xl">
 			{isRouteErrorResponse(error)
 				? (statusHandlers?.[error.status] ?? defaultStatusHandler)({
 						error,

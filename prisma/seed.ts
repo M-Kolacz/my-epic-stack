@@ -1,19 +1,19 @@
-import { prisma } from '#app/utils/db.server';
-import { cleanupDb, createPassword, createUser } from '#tests/db-utils';
-import { faker } from '@faker-js/faker';
+import { faker } from "@faker-js/faker";
+import { prisma } from "#app/utils/db.server";
+import { cleanupDb, createPassword, createUser } from "#tests/db-utils";
 
 const seed = async () => {
-	console.log('🌱 Seeding...');
-	console.time('🌱 Database has been seeded');
+	console.log("🌱 Seeding...");
+	console.time("🌱 Database has been seeded");
 
-	console.time('🧹 Cleanup database');
+	console.time("🧹 Cleanup database");
 	await cleanupDb();
-	console.timeEnd('🧹 Cleanup database');
+	console.timeEnd("🧹 Cleanup database");
 
-	console.time('🗝️  Create permissions...');
-	const entities = ['user', 'note'];
-	const actions = ['create', 'read', 'update', 'delete'];
-	const accesses = ['own', 'any'] as const;
+	console.time("🗝️  Create permissions...");
+	const entities = ["user", "note"];
+	const actions = ["create", "read", "update", "delete"];
+	const accesses = ["own", "any"] as const;
 
 	const permissionsToCreate = [];
 
@@ -30,16 +30,16 @@ const seed = async () => {
 	}
 
 	await prisma.permission.createMany({ data: permissionsToCreate });
-	console.timeEnd('🗝️  Create permissions...');
+	console.timeEnd("🗝️  Create permissions...");
 
-	console.time('👑 Create roles...');
+	console.time("👑 Create roles...");
 	await prisma.role.create({
 		data: {
-			name: 'admin',
+			name: "admin",
 			permissions: {
 				connect: await prisma.permission.findMany({
 					select: { id: true },
-					where: { access: 'any' },
+					where: { access: "any" },
 				}),
 			},
 		},
@@ -47,16 +47,16 @@ const seed = async () => {
 
 	await prisma.role.create({
 		data: {
-			name: 'user',
+			name: "user",
 			permissions: {
 				connect: await prisma.permission.findMany({
 					select: { id: true },
-					where: { access: 'own' },
+					where: { access: "own" },
 				}),
 			},
 		},
 	});
-	console.timeEnd('👑 Create roles...');
+	console.timeEnd("👑 Create roles...");
 
 	const totalUsers = 5;
 	console.time(`👥 Create ${totalUsers} users`);
@@ -67,7 +67,7 @@ const seed = async () => {
 		await prisma.user.create({
 			data: {
 				...userData,
-				roles: { connect: { name: 'user' } },
+				roles: { connect: { name: "user" } },
 				password: {
 					create: await createPassword(userData.username),
 				},
@@ -89,12 +89,12 @@ const seed = async () => {
 
 	await prisma.user.create({
 		data: {
-			email: 'kody@gmail.com',
-			name: 'Kody',
-			username: 'kody',
-			roles: { connect: [{ name: 'user' }, { name: 'admin' }] },
+			email: "kody@gmail.com",
+			name: "Kody",
+			username: "kody",
+			roles: { connect: [{ name: "user" }, { name: "admin" }] },
 			password: {
-				create: await createPassword('kodylovesyou'),
+				create: await createPassword("kodylovesyou"),
 			},
 			notes: {
 				create: Array.from({
@@ -109,12 +109,12 @@ const seed = async () => {
 
 	console.timeEnd(`🐨 Create Kody user`);
 
-	console.timeEnd('🌱 Database has been seeded');
+	console.timeEnd("🌱 Database has been seeded");
 };
 
 seed()
 	.catch((error) => {
-		console.error('🌵 Seed process failed', error);
+		console.error("🌵 Seed process failed", error);
 		process.exit(1);
 	})
 	.finally(async () => {

@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
-import { toast as showToast } from 'sonner';
-import { Toast } from '#app/utils/toast.server';
+import { useEffect } from "react";
+import { toast as showToast } from "sonner";
+import { type Toast } from "#app/utils/toast.server";
 
 export const useToast = (toast: Toast | undefined) => {
 	useEffect(() => {

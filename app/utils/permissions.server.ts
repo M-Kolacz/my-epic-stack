@@ -1,7 +1,7 @@
-import { json } from '@remix-run/node';
-import { requireUserId } from './auth.server';
-import { prisma } from './db.server';
-import { PermissionString, Role, parsePermissionString } from './user';
+import { json } from "@remix-run/node";
+import { requireUserId } from "./auth.server";
+import { prisma } from "./db.server";
+import { type PermissionString, type Role, parsePermissionString } from "./user";
 
 export const requireUserWithPermission = async (
 	request: Request,
@@ -31,7 +31,7 @@ export const requireUserWithPermission = async (
 	if (!user) {
 		throw json(
 			{
-				error: 'Unauthorized',
+				error: "Unauthorized",
 				requiredPermission: permissionData,
 				message: `Unauthorized: required permissions: ${permission}`,
 			},
@@ -59,7 +59,7 @@ export const requireUserWithRole = async (request: Request, role: Role) => {
 	if (!user) {
 		throw json(
 			{
-				error: 'Unauthorized',
+				error: "Unauthorized",
 				requiredRole: role,
 				message: `Unauthorized: required role: ${role}`,
 			},

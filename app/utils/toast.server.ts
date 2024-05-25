@@ -1,24 +1,24 @@
-import { createCookieSessionStorage, redirect } from '@remix-run/node';
+import { createCookieSessionStorage, redirect } from "@remix-run/node";
 
 export type Toast = {
 	id: string;
 	description: string;
 	title: string;
-	type: 'info';
+	type: "info";
 };
 
-const toastKey = 'toast';
+const toastKey = "toast";
 
 export const toastSessionStorage = createCookieSessionStorage<
 	Record<typeof toastKey, Toast>
 >({
 	cookie: {
-		name: 'my-epic-toast',
+		name: "my-epic-toast",
 		httpOnly: true,
-		sameSite: 'lax',
-		path: '/',
-		secure: process.env.NODE_ENV === 'production',
-		secrets: process.env.SESSION_SECRET.split(','),
+		sameSite: "lax",
+		path: "/",
+		secure: process.env.NODE_ENV === "production",
+		secrets: process.env.SESSION_SECRET.split(","),
 	},
 });
 
@@ -32,7 +32,7 @@ export const redirectWithToast = async (
 	const toastCookie = await createToastCookie(toast);
 
 	const headers = new Headers(init?.headers);
-	headers.append('set-cookie', toastCookie);
+	headers.append("set-cookie", toastCookie);
 
 	return redirect(url, {
 		headers,
@@ -44,7 +44,7 @@ export const redirectWithToast = async (
 export const createToastCookie = async (toast: Toast) => {
 	const toastSession = await toastSessionStorage.getSession();
 
-	toastSession.flash('toast', toast);
+	toastSession.flash("toast", toast);
 
 	const toastCookie = await toastSessionStorage.commitSession(toastSession);
 
@@ -52,10 +52,10 @@ export const createToastCookie = async (toast: Toast) => {
 };
 
 export const getToast = async (request: Request) => {
-	const cookieHeader = request.headers.get('cookie');
+	const cookieHeader = request.headers.get("cookie");
 
 	const toastSession = await toastSessionStorage.getSession(cookieHeader);
-	const toast = toastSession.get('toast');
+	const toast = toastSession.get("toast");
 
 	const toastCookie = await toastSessionStorage.destroySession(toastSession);
 

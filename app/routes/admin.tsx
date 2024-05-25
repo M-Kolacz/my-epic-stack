@@ -1,9 +1,9 @@
-import { GeneralErrorBoundary } from '#app/components/error-boundary';
-import { requireUserWithRole } from '#app/utils/permissions.server';
-import { LoaderFunctionArgs, json } from '@remix-run/node';
+import { type LoaderFunctionArgs, json } from "@remix-run/node";
+import { GeneralErrorBoundary } from "#app/components/error-boundary";
+import { requireUserWithRole } from "#app/utils/permissions.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	await requireUserWithRole(request, 'admin');
+	await requireUserWithRole(request, "admin");
 
 	return json({});
 };

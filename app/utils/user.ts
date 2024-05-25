@@ -1,8 +1,8 @@
-import { useRouteLoaderData } from '@remix-run/react';
-import { type loader as rootLoader } from '#app/root';
+import { useRouteLoaderData } from "@remix-run/react";
+import { type loader as rootLoader } from "#app/root";
 
 export const useOptionalUser = () => {
-	const rootData = useRouteLoaderData<typeof rootLoader>('root');
+	const rootData = useRouteLoaderData<typeof rootLoader>("root");
 
 	return rootData?.user ?? null;
 };
@@ -12,17 +12,17 @@ export const useUser = () => {
 
 	if (!maybeUser) {
 		throw new Error(
-			'User not found! If user is optional then use useOptionalUser instead.',
+			"User not found! If user is optional then use useOptionalUser instead.",
 		);
 	}
 
 	return maybeUser;
 };
 
-export const action = ['create', 'read', 'update', 'delete'] as const;
-export const entity = ['user', 'note'] as const;
-export const access = ['own', 'any', 'own,any', 'any,own'] as const;
-export const role = ['admin', 'user'] as const;
+export const action = ["create", "read", "update", "delete"] as const;
+export const entity = ["user", "note"] as const;
+export const access = ["own", "any", "own,any", "any,own"] as const;
+export const role = ["admin", "user"] as const;
 
 export type Action = (typeof action)[number];
 export type Entity = (typeof entity)[number];
@@ -33,7 +33,7 @@ export type PermissionString =
 	| `${Action}:${Entity}:${Access}`;
 
 export const parsePermissionString = (permissionString: PermissionString) => {
-	const [action, entity, access] = permissionString.split(':') as [
+	const [action, entity, access] = permissionString.split(":") as [
 		Action,
 		Entity,
 		Access | undefined,
@@ -43,13 +43,13 @@ export const parsePermissionString = (permissionString: PermissionString) => {
 		action,
 		entity,
 		access: access
-			? (access.split(',') as Array<Extract<Access, 'own' | 'any'>>)
+			? (access.split(",") as Array<Extract<Access, "own" | "any">>)
 			: undefined,
 	};
 };
 
 export const userHasPermission = (
-	user: Pick<ReturnType<typeof useUser>, 'roles'> | null,
+	user: Pick<ReturnType<typeof useUser>, "roles"> | null,
 	permission: PermissionString,
 ) => {
 	if (!user) return false;
@@ -65,7 +65,7 @@ export const userHasPermission = (
 };
 
 export const userHasRole = (
-	user: Pick<ReturnType<typeof useUser>, 'roles'> | null,
+	user: Pick<ReturnType<typeof useUser>, "roles"> | null,
 	role: Role,
 ) => {
 	if (!user) return false;

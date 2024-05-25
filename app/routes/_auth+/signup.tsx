@@ -1,31 +1,24 @@
-import { Form, useActionData } from '@remix-run/react';
-import { Field, ErrorList, CheckboxField } from '#app/components/form';
-import { Button } from '#app/components/ui/button';
-import { getFormProps, getInputProps, useForm } from '@conform-to/react';
-import { SignupSchema } from '#app/utils/schema';
-import { getZodConstraint, parseWithZod } from '@conform-to/zod';
+import { getFormProps, getInputProps, useForm } from "@conform-to/react";
+import { getZodConstraint, parseWithZod } from "@conform-to/zod";
 import {
-	ActionFunctionArgs,
-	LoaderFunctionArgs,
+	type ActionFunctionArgs,
+	type LoaderFunctionArgs,
 	json,
 	redirect,
-} from '@remix-run/node';
-import { HoneypotInputs } from 'remix-utils/honeypot/react';
-import { AuthenticityTokenInput } from 'remix-utils/csrf/react';
-import { checkCsrf } from '#app/utils/csrf.server';
-import { checkHoneypot } from '#app/utils/honeypot.server';
-import { getPath } from '#app/utils/server';
-import { prisma } from '#app/utils/db.server';
-import {
-	getSessionExpirationDate,
-	requireAnonymous,
-	signup,
-} from '#app/utils/auth.server';
-import { createConfettiCookie } from '#app/utils/confetti.server';
-import { createToastCookie } from '#app/utils/toast.server';
-import { authSessionStorage } from '#app/utils/authSession.server';
-import { sendEmail } from '#app/utils/email.server';
-import { verifySessionStorage } from '#app/utils/verifySession.server';
+} from "@remix-run/node";
+import { Form, useActionData } from "@remix-run/react";
+import { AuthenticityTokenInput } from "remix-utils/csrf/react";
+import { HoneypotInputs } from "remix-utils/honeypot/react";
+import { Field, ErrorList } from "#app/components/form";
+import { Button } from "#app/components/ui/button";
+import { requireAnonymous } from "#app/utils/auth.server";
+import { checkCsrf } from "#app/utils/csrf.server";
+import { prisma } from "#app/utils/db.server";
+import { sendEmail } from "#app/utils/email.server";
+import { checkHoneypot } from "#app/utils/honeypot.server";
+import { SignupSchema } from "#app/utils/schema";
+import { getPath } from "#app/utils/server";
+import { verifySessionStorage } from "#app/utils/verifySession.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	await requireAnonymous(request);
@@ -49,22 +42,22 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			existingUser.forEach((user) => {
 				user.email === data.email &&
 					ctx.addIssue({
-						code: 'custom',
-						path: ['email'],
-						message: 'An account with this email already exists',
+						code: "custom",
+						path: ["email"],
+						message: "An account with this email already exists",
 					});
 			});
 		}),
 		async: true,
 	});
 
-	if (submission.status !== 'success' || !submission.value.email) {
+	if (submission.status !== "success" || !submission.value.email) {
 		return json(
 			{
 				result: submission.reply(),
 			},
 			{
-				status: submission.status === 'error' ? 400 : 200,
+				status: submission.status === "error" ? 400 : 200,
 			},
 		);
 	}
@@ -73,24 +66,24 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 	const response = await sendEmail({
 		to: email,
-		subject: 'Welcome to Conform-to',
-		html: '<h1>Welcome to Conform-to</h1>',
+		subject: "Welcome to Conform-to",
+		html: "<h1>Welcome to Conform-to</h1>",
 	});
 
 	const headers = new Headers();
 
-	if (response.status === 'success') {
+	if (response.status === "success") {
 		const verifySession = await verifySessionStorage.getSession(
-			request.headers.get('cookie'),
+			request.headers.get("cookie"),
 		);
-		verifySession.set('email', email);
+		verifySession.set("email", email);
 
 		headers.append(
-			'set-cookie',
+			"set-cookie",
 			await verifySessionStorage.commitSession(verifySession),
 		);
 
-		return redirect('/onboarding', { headers });
+		return redirect("/onboarding", { headers });
 	} else {
 		return json(
 			{
@@ -105,30 +98,30 @@ const SignupRoute = () => {
 	const actionData = useActionData<typeof action>();
 
 	const [form, fields] = useForm({
-		id: 'signup-form',
+		id: "signup-form",
 		constraint: getZodConstraint(SignupSchema),
 		lastResult: actionData?.result,
 		onValidate: ({ formData }) =>
 			parseWithZod(formData, { schema: SignupSchema }),
-		shouldValidate: 'onBlur',
+		shouldValidate: "onBlur",
 	});
 
 	return (
 		<Form
-			method='POST'
+			method="POST"
 			{...getFormProps(form)}
-			className='flex flex-col gap-4'>
+			className="flex flex-col gap-4">
 			<Field
-				{...getInputProps(fields.email, { type: 'email' })}
-				label='Email'
+				{...getInputProps(fields.email, { type: "email" })}
+				label="Email"
 				errors={fields.email.errors}
 				errorId={fields.email.errorId}
-				autoComplete='email'
+				autoComplete="email"
 				autoFocus
 			/>
 
 			<ErrorList errors={form.errors} errorId={form.errorId} />
-			<Button type='submit'>Signup</Button>
+			<Button type="submit">Signup</Button>
 
 			<HoneypotInputs />
 			<AuthenticityTokenInput />

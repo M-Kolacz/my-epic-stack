@@ -1,19 +1,19 @@
-import { Button } from '#app/components/ui/button';
-import { prisma } from '#app/utils/db.server';
-import { invariantResponse } from '#app/utils/invariant';
-import { getFormProps, getInputProps, useForm } from '@conform-to/react';
-import { ActionFunctionArgs, LoaderFunctionArgs, json } from '@remix-run/node';
-import { Form, useActionData, useLoaderData } from '@remix-run/react';
-import { DeleteNoteSchema } from '#app/utils/schema';
-import { getZodConstraint, parseWithZod } from '@conform-to/zod';
-import { ErrorList } from '#app/components/form';
-import { AuthenticityTokenInput } from 'remix-utils/csrf/react';
-import { checkCsrf } from '#app/utils/csrf.server';
-import { redirectWithToast } from '#app/utils/toast.server';
-import { requireUserId } from '#app/utils/auth.server';
-import { Link } from '#app/components/link';
-import { requireUserWithPermission } from '#app/utils/permissions.server';
-import { useOptionalUser, userHasPermission } from '#app/utils/user';
+import { getFormProps, getInputProps, useForm } from "@conform-to/react";
+import { getZodConstraint, parseWithZod } from "@conform-to/zod";
+import { type ActionFunctionArgs, type LoaderFunctionArgs, json } from "@remix-run/node";
+import { Form, useActionData, useLoaderData } from "@remix-run/react";
+import { AuthenticityTokenInput } from "remix-utils/csrf/react";
+import { ErrorList } from "#app/components/form";
+import { Link } from "#app/components/link";
+import { Button } from "#app/components/ui/button";
+import { requireUserId } from "#app/utils/auth.server";
+import { checkCsrf } from "#app/utils/csrf.server";
+import { prisma } from "#app/utils/db.server";
+import { invariantResponse } from "#app/utils/invariant";
+import { requireUserWithPermission } from "#app/utils/permissions.server";
+import { DeleteNoteSchema } from "#app/utils/schema";
+import { redirectWithToast } from "#app/utils/toast.server";
+import { useOptionalUser, userHasPermission } from "#app/utils/user";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const note = await prisma.note.findUnique({
@@ -21,7 +21,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		select: { id: true, title: true, content: true, ownerId: true },
 	});
 
-	invariantResponse(note, 'Note not found', {
+	invariantResponse(note, "Note not found", {
 		status: 404,
 	});
 
@@ -29,7 +29,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 };
 
 const intentName = {
-	deleteNote: 'delete-note',
+	deleteNote: "delete-note",
 };
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
@@ -42,10 +42,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		schema: DeleteNoteSchema,
 	});
 
-	if (submission.status !== 'success') {
+	if (submission.status !== "success") {
 		return json(
 			{ result: submission.reply() },
-			{ status: submission.status === 'error' ? 400 : 200 },
+			{ status: submission.status === "error" ? 400 : 200 },
 		);
 	}
 
@@ -56,26 +56,26 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		select: { id: true, ownerId: true },
 	});
 
-	invariantResponse(note, 'Note not found', { status: 404 });
+	invariantResponse(note, "Note not found", { status: 404 });
 
 	const isNoteOwner = note.ownerId === userId;
 
 	const permission = await requireUserWithPermission(
 		request,
-		isNoteOwner ? 'delete:note:own' : 'delete:note:any',
+		isNoteOwner ? "delete:note:own" : "delete:note:any",
 	);
 
-	invariantResponse(permission, 'You are not allowed to delete this note', {
+	invariantResponse(permission, "You are not allowed to delete this note", {
 		status: 403,
 	});
 
 	await prisma.note.delete({ where: { id: noteId } });
 
 	return redirectWithToast(`/users/${params.username}/notes`, {
-		title: 'Note deleted',
-		description: 'Your note has been deleted',
+		title: "Note deleted",
+		description: "Your note has been deleted",
 		id: noteId,
-		type: 'info',
+		type: "info",
 	});
 };
 
@@ -87,20 +87,20 @@ const NoteIdRoute = () => {
 
 	const canDelete = userHasPermission(
 		user,
-		isOwner ? 'delete:note:own' : 'delete:note:any',
+		isOwner ? "delete:note:own" : "delete:note:any",
 	);
 
 	return (
-		<div className='max-w-3xl'>
-			<h1 className='pb-5 text-5xl'>{data.note.title}</h1>
+		<div className="max-w-3xl">
+			<h1 className="pb-5 text-5xl">{data.note.title}</h1>
 
 			<p>{data.note.content}</p>
 
 			<div
 				data-hidden={!canDelete}
-				className='mt-4 flex justify-end gap-4 data-[hidden=true]:hidden'>
+				className="mt-4 flex justify-end gap-4 data-[hidden=true]:hidden">
 				<DeleteNoteForm />
-				<Link to='edit'>Edit</Link>
+				<Link to="edit">Edit</Link>
 			</div>
 		</div>
 	);
@@ -116,19 +116,19 @@ const DeleteNoteForm = () => {
 		lastResult: actionData?.result,
 		onValidate: ({ formData }) =>
 			parseWithZod(formData, { schema: DeleteNoteSchema }),
-		shouldValidate: 'onBlur',
+		shouldValidate: "onBlur",
 	});
 
 	return (
-		<Form method='POST' {...getFormProps(form)}>
+		<Form method="POST" {...getFormProps(form)}>
 			<input
-				{...getInputProps(fields.noteId, { type: 'hidden' })}
+				{...getInputProps(fields.noteId, { type: "hidden" })}
 				value={data.note.id}
 			/>
 
 			<Button
-				type='submit'
-				variant={'destructive'}
+				type="submit"
+				variant={"destructive"}
 				name={fields.intent.name}
 				value={intentName.deleteNote}>
 				Delete

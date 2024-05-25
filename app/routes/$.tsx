@@ -1,9 +1,9 @@
-import { GeneralErrorBoundary } from '#app/components/error-boundary';
-import { Link } from '#app/components/link';
-import { useLocation } from '@remix-run/react';
+import { useLocation } from "@remix-run/react";
+import { GeneralErrorBoundary } from "#app/components/error-boundary";
+import { Link } from "#app/components/link";
 
 export const loader = async () => {
-	throw new Response('Not found', { status: 404 });
+	throw new Response("Not found", { status: 404 });
 };
 
 export default function NotFoundRoute() {
@@ -17,14 +17,14 @@ export const ErrorBoundary = () => {
 		<GeneralErrorBoundary
 			statusHandlers={{
 				404: () => (
-					<div className='flex flex-col gap-6'>
-						<div className='flex flex-col gap-3'>
+					<div className="flex flex-col gap-6">
+						<div className="flex flex-col gap-3">
 							<h1>We can't find this page:</h1>
-							<pre className='text-body-lg whitespace-pre-wrap break-all'>
+							<pre className="text-body-lg whitespace-pre-wrap break-all">
 								{location.pathname}
 							</pre>
 						</div>
-						<Link to='/' className='text-body-md underline'>
+						<Link to="/" className="text-body-md underline">
 							Back to home
 						</Link>
 					</div>

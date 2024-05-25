@@ -1,23 +1,23 @@
-import { prisma } from '#app/utils/db.server';
-import { invariantResponse } from '#app/utils/invariant';
+import { getFormProps, getInputProps, useForm } from "@conform-to/react";
+import { getZodConstraint, parseWithZod } from "@conform-to/zod";
 import {
-	ActionFunctionArgs,
-	LoaderFunctionArgs,
+	type ActionFunctionArgs,
+	type LoaderFunctionArgs,
 	json,
 	redirect,
-} from '@remix-run/node';
-import { Form, useActionData, useLoaderData } from '@remix-run/react';
-import { Field } from '#app/components/form';
-import { Button } from '#app/components/ui/button';
-import { getFormProps, getInputProps, useForm } from '@conform-to/react';
-import { EditNoteSchema } from '#app/utils/schema';
-import { getZodConstraint, parseWithZod } from '@conform-to/zod';
-import { AuthenticityTokenInput } from 'remix-utils/csrf/react';
-import { checkCsrf } from '#app/utils/csrf.server';
-import { requireUser, requireUserId } from '#app/utils/auth.server';
+} from "@remix-run/node";
+import { Form, useActionData, useLoaderData } from "@remix-run/react";
+import { AuthenticityTokenInput } from "remix-utils/csrf/react";
+import { Field } from "#app/components/form";
+import { Button } from "#app/components/ui/button";
+import { requireUser, requireUserId } from "#app/utils/auth.server";
+import { checkCsrf } from "#app/utils/csrf.server";
+import { prisma } from "#app/utils/db.server";
+import { invariantResponse } from "#app/utils/invariant";
+import { EditNoteSchema } from "#app/utils/schema";
 
 const intentName = {
-	editNote: 'edit-note',
+	editNote: "edit-note",
 };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
@@ -31,11 +31,11 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
 	invariantResponse(
 		user.id === note?.ownerId,
-		'You are not owner of this note',
+		"You are not owner of this note",
 		{ status: 403 },
 	);
 
-	invariantResponse(note, 'Note not found', {
+	invariantResponse(note, "Note not found", {
 		status: 404,
 	});
 
@@ -49,10 +49,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	const submission = parseWithZod(formData, { schema: EditNoteSchema });
 
-	if (submission.status !== 'success') {
+	if (submission.status !== "success") {
 		return json(
 			{ result: submission.reply() },
-			{ status: submission.status === 'error' ? 400 : 200 },
+			{ status: submission.status === "error" ? 400 : 200 },
 		);
 	}
 
@@ -61,17 +61,17 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	invariantResponse(
 		user.id === note?.ownerId,
-		'You are not owner of this note',
+		"You are not owner of this note",
 		{ status: 403 },
 	);
 
-	invariantResponse(note, 'Note not found', { status: 404 });
+	invariantResponse(note, "Note not found", { status: 404 });
 
 	const userId = await requireUserId(request);
 
 	invariantResponse(
 		note.ownerId === userId,
-		'You are not owner of this note',
+		"You are not owner of this note",
 		{
 			status: 403,
 		},
@@ -100,30 +100,30 @@ const NoteEditRoute = () => {
 		lastResult: actionData?.result,
 		onValidate: ({ formData }) =>
 			parseWithZod(formData, { schema: EditNoteSchema }),
-		shouldValidate: 'onBlur',
+		shouldValidate: "onBlur",
 	});
 
 	return (
 		<Form
-			method='POST'
+			method="POST"
 			{...getFormProps(form)}
-			className='flex w-1/2 flex-col gap-4'>
+			className="flex w-1/2 flex-col gap-4">
 			<Field
-				{...getInputProps(fields.title, { type: 'text' })}
+				{...getInputProps(fields.title, { type: "text" })}
 				errors={fields.title.errors}
 				errorId={fields.title.errorId}
 				defaultValue={data.note.title}
-				label='Title'
+				label="Title"
 			/>
 			<Field
-				{...getInputProps(fields.content, { type: 'text' })}
+				{...getInputProps(fields.content, { type: "text" })}
 				errors={fields.content.errors}
 				errorId={fields.content.errorId}
 				defaultValue={data.note.content}
-				label='Content'
+				label="Content"
 			/>
-			<input type='hidden' name='intent' value={intentName.editNote} />
-			<Button type='submit'>Edit note</Button>
+			<input type="hidden" name="intent" value={intentName.editNote} />
+			<Button type="submit">Edit note</Button>
 
 			<AuthenticityTokenInput />
 		</Form>

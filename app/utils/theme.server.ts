@@ -1,17 +1,17 @@
-import { parse, serialize } from 'cookie';
+import { parse, serialize } from "cookie";
 
-export type Theme = 'light' | 'dark';
+export type Theme = "light" | "dark";
 
-const cookieName = 'my-epic-theme';
-const defaultTheme = 'light';
+const cookieName = "my-epic-theme";
+const defaultTheme = "light";
 
 export const getTheme = (request: Request) => {
-	const cookieHeader = request.headers.get('cookie');
+	const cookieHeader = request.headers.get("cookie");
 	const parsed = cookieHeader
 		? parse(cookieHeader)[cookieName]
 		: defaultTheme;
 
-	if (parsed === 'light' || parsed === 'dark') return parsed;
+	if (parsed === "light" || parsed === "dark") return parsed;
 
 	return defaultTheme;
 };
@@ -24,7 +24,7 @@ export const getTheme = (request: Request) => {
  */
 export const getThemeCookie = (theme: Theme) =>
 	serialize(cookieName, theme, {
-		path: '/',
-		sameSite: 'lax',
+		path: "/",
+		sameSite: "lax",
 		httpOnly: true,
 	});

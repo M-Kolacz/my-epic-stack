@@ -1,13 +1,13 @@
-import { CSRF, CSRFError } from 'remix-utils/csrf/server';
-import { createCookie } from '@remix-run/node';
-import { getPath } from '#app/utils/server';
+import { createCookie } from "@remix-run/node";
+import { CSRF, CSRFError } from "remix-utils/csrf/server";
+import { getPath } from "#app/utils/server";
 
-export const csrfCookie = createCookie('csrf', {
-	path: '/',
+export const csrfCookie = createCookie("csrf", {
+	path: "/",
 	httpOnly: true,
-	secure: process.env.NODE_ENV === 'production',
-	sameSite: 'lax',
-	secrets: process.env.CSRF_SECRET.split(','),
+	secure: process.env.NODE_ENV === "production",
+	sameSite: "lax",
+	secrets: process.env.CSRF_SECRET.split(","),
 });
 
 export const csrf = new CSRF({
@@ -21,11 +21,11 @@ export const checkCsrf = async (request: Request) => {
 	} catch (error) {
 		if (error instanceof CSRFError) {
 			console.error(
-				'👮‍♂️ CSRF attack detected',
+				"👮‍♂️ CSRF attack detected",
 				getPath(request),
 				error.message,
 			);
-			throw new Response('Invalid CSRF token', { status: 403 });
+			throw new Response("Invalid CSRF token", { status: 403 });
 		}
 		throw error;
 	}

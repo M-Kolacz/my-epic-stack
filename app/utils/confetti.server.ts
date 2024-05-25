@@ -1,19 +1,19 @@
-import { createCookieSessionStorage, redirect } from '@remix-run/node';
+import { createCookieSessionStorage, redirect } from "@remix-run/node";
 
 export type ConfettiId = string;
 
-const confettiId = 'confetti';
+const confettiId = "confetti";
 
 export const confettiSessionStorage = createCookieSessionStorage<
 	Record<typeof confettiId, ConfettiId>
 >({
 	cookie: {
-		name: 'my-epic-confetti',
+		name: "my-epic-confetti",
 		httpOnly: true,
-		sameSite: 'lax',
-		path: '/',
-		secure: process.env.NODE_ENV === 'production',
-		secrets: process.env.SESSION_SECRET.split(','),
+		sameSite: "lax",
+		path: "/",
+		secure: process.env.NODE_ENV === "production",
+		secrets: process.env.SESSION_SECRET.split(","),
 	},
 });
 
@@ -27,7 +27,7 @@ export const redirectWithConfetti = async (
 	const confettiCookie = await createConfettiCookie(toast);
 
 	const headers = new Headers(init?.headers);
-	headers.append('set-cookie', confettiCookie);
+	headers.append("set-cookie", confettiCookie);
 
 	return redirect(url, {
 		headers,
@@ -39,7 +39,7 @@ export const redirectWithConfetti = async (
 export const createConfettiCookie = async (confetti: ConfettiId) => {
 	const confettiSession = await confettiSessionStorage.getSession();
 
-	confettiSession.flash('confetti', confetti);
+	confettiSession.flash("confetti", confetti);
 
 	const confettiCookie =
 		await confettiSessionStorage.commitSession(confettiSession);
@@ -48,11 +48,11 @@ export const createConfettiCookie = async (confetti: ConfettiId) => {
 };
 
 export const getConfettiId = async (request: Request) => {
-	const cookieHeader = request.headers.get('cookie');
+	const cookieHeader = request.headers.get("cookie");
 
 	const confettiSession =
 		await confettiSessionStorage.getSession(cookieHeader);
-	const confettiId = confettiSession.get('confetti');
+	const confettiId = confettiSession.get("confetti");
 
 	const confettiCookie =
 		await confettiSessionStorage.destroySession(confettiSession);

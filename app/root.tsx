@@ -1,7 +1,9 @@
+import { getFormProps, useForm } from "@conform-to/react";
+import { parseWithZod } from "@conform-to/zod";
 import {
-	ActionFunctionArgs,
-	LinksFunction,
-	LoaderFunctionArgs,
+	type ActionFunctionArgs,
+	type LinksFunction,
+	type LoaderFunctionArgs,
 	json,
 } from "@remix-run/node";
 import {
@@ -16,31 +18,19 @@ import {
 	useLocation,
 	useSubmit,
 } from "@remix-run/react";
-import { Link } from "#app/components/link";
-import tailwindStyleSheetUrl from "./styles/tailwind.css?url";
-import { honeypot } from "./utils/honeypot.server";
-import { HoneypotProvider } from "remix-utils/honeypot/react";
-import { csrf } from "./utils/csrf.server";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
 	AuthenticityTokenInput,
 	AuthenticityTokenProvider,
 	useAuthenticityToken,
 } from "remix-utils/csrf/react";
-import { GeneralErrorBoundary } from "./components/error-boundary";
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Button } from "./components/ui/button";
-import { getFormProps, useForm } from "@conform-to/react";
-import { parseWithZod } from "@conform-to/zod";
-import { ThemeSchema } from "./utils/schema";
-import { getTheme, getThemeCookie, type Theme } from "./utils/theme.server";
+import { HoneypotProvider } from "remix-utils/honeypot/react";
 import { Toaster } from "sonner";
-import { useToast } from "./components/toaster";
-import { getToast } from "./utils/toast.server";
-import { Confetti } from "./components/confetti";
-import { getConfettiId } from "./utils/confetti.server";
-import { prisma } from "./utils/db.server";
+import { Link } from "#app/components/link";
 import { Avatar, AvatarFallback, AvatarImage } from "#app/components/ui/avatar";
-import { useOptionalUser } from "./utils/user";
+import { Confetti } from "./components/confetti";
+import { GeneralErrorBoundary } from "./components/error-boundary";
+import { useToast } from "./components/toaster";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -51,7 +41,17 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "./components/ui/alert-dialog";
+import { Button } from "./components/ui/button";
+import tailwindStyleSheetUrl from "./styles/tailwind.css?url";
 import { getUserId } from "./utils/auth.server";
+import { getConfettiId } from "./utils/confetti.server";
+import { csrf } from "./utils/csrf.server";
+import { prisma } from "./utils/db.server";
+import { honeypot } from "./utils/honeypot.server";
+import { ThemeSchema } from "./utils/schema";
+import { getTheme, getThemeCookie, type Theme } from "./utils/theme.server";
+import { getToast } from "./utils/toast.server";
+import { useOptionalUser } from "./utils/user";
 
 export const links: LinksFunction = () => {
 	return [
@@ -289,7 +289,7 @@ const LogoutTimer = () => {
 
 	const logout = useCallback(() => {
 		submit({ csrf }, { method: "POST", action: "/logout" });
-	}, [submit]);
+	}, [submit, csrf]);
 
 	const cleanupTimers = useCallback(() => {
 		clearTimeout(modalTimer.current);
@@ -302,7 +302,7 @@ const LogoutTimer = () => {
 			setStatus("show-modal");
 		}, MODAL_TIME);
 		logoutTimer.current = setTimeout(logout, LOGOUT_TIME);
-	}, [cleanupTimers, logout, LOGOUT_TIME, MODAL_TIME]);
+	}, [cleanupTimers, logout]);
 
 	useEffect(() => resetTimers(), [resetTimers, location.key]);
 	useEffect(() => cleanupTimers, [cleanupTimers]);

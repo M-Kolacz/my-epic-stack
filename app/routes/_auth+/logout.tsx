@@ -1,9 +1,9 @@
-import { authSessionStorage } from '#app/utils/authSession.server';
-import { ActionFunctionArgs, redirect } from '@remix-run/node';
-import { checkCsrf } from '#app/utils/csrf.server';
+import { type ActionFunctionArgs, redirect } from "@remix-run/node";
+import { authSessionStorage } from "#app/utils/authSession.server";
+import { checkCsrf } from "#app/utils/csrf.server";
 
 export const loader = () => {
-	return redirect('/');
+	return redirect("/");
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -13,9 +13,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 	const headers = new Headers();
 	headers.append(
-		'set-cookie',
+		"set-cookie",
 		await authSessionStorage.destroySession(authSession),
 	);
 
-	return redirect('/', { headers });
+	return redirect("/", { headers });
 };

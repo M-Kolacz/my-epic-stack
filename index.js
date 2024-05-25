@@ -1,9 +1,9 @@
-import 'dotenv/config';
-import * as fs from 'fs';
-import chalk from 'chalk';
-import closeWithGrace from 'close-with-grace';
-import sourceMapSupport from 'source-map-support';
-import { execaCommandSync } from 'execa';
+import "dotenv/config";
+import * as fs from "fs";
+import chalk from "chalk";
+import closeWithGrace from "close-with-grace";
+import { execaCommandSync } from "execa";
+import sourceMapSupport from "source-map-support";
 
 sourceMapSupport.install({
 	retrieveSourceMap: function (source) {
@@ -12,7 +12,7 @@ sourceMapSupport.install({
 		if (match) {
 			return {
 				url: source,
-				map: fs.readFileSync(`${match[1]}.map`, 'utf8'),
+				map: fs.readFileSync(`${match[1]}.map`, "utf8"),
 			};
 		}
 		return null;
@@ -27,14 +27,14 @@ closeWithGrace(async ({ err }) => {
 	}
 });
 
-if (process.env.MOCKS === 'true') {
-	await import('./tests/mocks/index.ts');
+if (process.env.MOCKS === "true") {
+	await import("./tests/mocks/index.ts");
 }
 
-if (process.env.NODE_ENV === 'production') {
-	const { stdout } = execaCommandSync('npx prisma migrate deploy');
+if (process.env.NODE_ENV === "production") {
+	const { stdout } = execaCommandSync("npx prisma migrate deploy");
 	console.log(stdout);
-	await import('./server-build/index.js');
+	await import("./server-build/index.js");
 } else {
-	await import('./server/index.ts');
+	await import("./server/index.ts");
 }
