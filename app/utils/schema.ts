@@ -49,7 +49,7 @@ export const LoginSchema = z.object({
   redirectTo: z.string().optional(),
 });
 
-export const SignupSchema = z
+export const OnboardingSchema = z
   .object({
     email,
     username,
@@ -57,6 +57,10 @@ export const SignupSchema = z
     remember: z.boolean().optional(),
   })
   .and(PasswordAndConfirmPasswordSchema);
+
+export const SignupSchema = z.object({
+  email,
+});
 
 export const ThemeSchema = z.object({
   theme: z.enum(["light", "dark"]),

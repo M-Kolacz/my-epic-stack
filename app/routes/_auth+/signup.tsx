@@ -24,6 +24,8 @@ import {
 import { createConfettiCookie } from "#app/utils/confetti.server";
 import { createToastCookie } from "#app/utils/toast.server";
 import { authSessionStorage } from "#app/utils/authSession.server";
+import { sendEmail } from "#app/utils/email.server";
+import { verifySessionStorage } from "#app/utils/verifySession.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   await requireAnonymous(request);
@@ -38,44 +40,28 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   checkHoneypot(formData, getPath(request));
 
   const submission = await parseWithZod(formData, {
-    schema: (intent) =>
-      SignupSchema.superRefine(async (data, ctx) => {
-        const existingUser = await prisma.user.findMany({
-          where: { OR: [{ email: data.email }, { username: data.username }] },
-          select: { id: true, email: true, username: true },
-        });
+    schema: SignupSchema.superRefine(async (data, ctx) => {
+      const existingUser = await prisma.user.findMany({
+        where: { OR: [{ email: data.email }] },
+        select: { id: true, email: true },
+      });
 
-        existingUser.forEach((user) => {
-          user.email === data.email &&
-            ctx.addIssue({
-              code: "custom",
-              path: ["email"],
-              message: "An account with this email already exists",
-            });
-
-          user.username === data.username &&
-            ctx.addIssue({
-              code: "custom",
-              path: ["username"],
-              message: "An account with this username already exists",
-            });
-        });
-      }).transform(async (data) => {
-        if (intent !== null) return { ...data, session: null };
-
-        const session = await signup(data);
-
-        return { ...data, session };
-      }),
+      existingUser.forEach((user) => {
+        user.email === data.email &&
+          ctx.addIssue({
+            code: "custom",
+            path: ["email"],
+            message: "An account with this email already exists",
+          });
+      });
+    }),
     async: true,
   });
 
-  if (submission.status !== "success" || !submission.value.session) {
+  if (submission.status !== "success" || !submission.value.email) {
     return json(
       {
-        result: submission.reply({
-          hideFields: ["password", "confirmPassword"],
-        }),
+        result: submission.reply(),
       },
       {
         status: submission.status === "error" ? 400 : 200,
@@ -83,33 +69,36 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     );
   }
 
-  const { session, remember } = submission.value;
+  const { email } = submission.value;
+
+  const response = await sendEmail({
+    to: email,
+    subject: "Welcome to Conform-to",
+    html: "<h1>Welcome to Conform-to</h1>",
+  });
 
   const headers = new Headers();
 
-  const confettiCookie = await createConfettiCookie("signup-success");
-  headers.append("set-cookie", confettiCookie);
+  if (response.status === "success") {
+    const verifySession = await verifySessionStorage.getSession(
+      request.headers.get("cookie")
+    );
+    verifySession.set("email", email);
 
-  const toastCookie = await createToastCookie({
-    description: "You have successfully signed up!",
-    id: "signup-success",
-    title: "Success!",
-    type: "info",
-  });
-  headers.append("set-cookie", toastCookie);
+    headers.append(
+      "set-cookie",
+      await verifySessionStorage.commitSession(verifySession)
+    );
 
-  const authSession = await authSessionStorage.getSession(
-    request.headers.get("cookie")
-  );
-  authSession.set("sessionId", session.id);
-  headers.append(
-    "set-cookie",
-    await authSessionStorage.commitSession(authSession, {
-      expires: remember ? session.expirationDate : undefined,
-    })
-  );
-
-  return redirect("/", { headers });
+    return redirect("/onboarding", { headers });
+  } else {
+    return json(
+      {
+        result: submission.reply({ formErrors: [response.error] }),
+      },
+      { status: 500 }
+    );
+  }
 };
 
 const SignupRoute = () => {
@@ -133,38 +122,6 @@ const SignupRoute = () => {
         errorId={fields.email.errorId}
         autoComplete="email"
         autoFocus
-      />
-      <Field
-        {...getInputProps(fields.username, { type: "text" })}
-        label="Username"
-        errors={fields.username.errors}
-        errorId={fields.username.errorId}
-        autoComplete="username"
-      />
-      <Field
-        {...getInputProps(fields.name, { type: "text" })}
-        label="Name"
-        errors={fields.name.errors}
-        errorId={fields.name.errorId}
-        autoComplete="name"
-      />
-      <Field
-        {...getInputProps(fields.password, { type: "password" })}
-        label="Password"
-        errors={fields.password.errors}
-        errorId={fields.password.errorId}
-        autoComplete="new-password"
-      />
-      <Field
-        {...getInputProps(fields.confirmPassword, { type: "password" })}
-        label="Confirm password"
-        errors={fields.confirmPassword.errors}
-        errorId={fields.confirmPassword.errorId}
-        autoComplete="new-password"
-      />
-
-      <CheckboxField
-        {...getInputProps(fields.remember, { type: "checkbox" })}
       />
 
       <ErrorList errors={form.errors} errorId={form.errorId} />
