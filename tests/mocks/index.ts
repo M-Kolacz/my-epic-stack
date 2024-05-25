@@ -5,11 +5,11 @@ import { resendHanlders } from "./resend";
 export const server = setupServer(...resendHanlders);
 
 server.listen({
-  onUnhandledRequest: "warn",
+	onUnhandledRequest: "warn",
 });
 
 console.info("🔶 Mock server installed");
 
 closeWithGrace(() => {
-  server.close();
+	server.close();
 });

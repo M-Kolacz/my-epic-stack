@@ -6,12 +6,14 @@ const cookieName = "my-epic-theme";
 const defaultTheme = "light";
 
 export const getTheme = (request: Request) => {
-  const cookieHeader = request.headers.get("cookie");
-  const parsed = cookieHeader ? parse(cookieHeader)[cookieName] : defaultTheme;
+	const cookieHeader = request.headers.get("cookie");
+	const parsed = cookieHeader
+		? parse(cookieHeader)[cookieName]
+		: defaultTheme;
 
-  if (parsed === "light" || parsed === "dark") return parsed;
+	if (parsed === "light" || parsed === "dark") return parsed;
 
-  return defaultTheme;
+	return defaultTheme;
 };
 
 /**
@@ -21,8 +23,8 @@ export const getTheme = (request: Request) => {
  * @returns The serialized cookie string.
  */
 export const getThemeCookie = (theme: Theme) =>
-  serialize(cookieName, theme, {
-    path: "/",
-    sameSite: "lax",
-    httpOnly: true,
-  });
+	serialize(cookieName, theme, {
+		path: "/",
+		sameSite: "lax",
+		httpOnly: true,
+	});
