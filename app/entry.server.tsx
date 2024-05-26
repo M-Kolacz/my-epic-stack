@@ -6,11 +6,18 @@
 
 import { PassThrough } from "node:stream";
 
-import  { type AppLoadContext, type EntryContext , createReadableStreamFromReadable } from "@remix-run/node";
+import {
+	type AppLoadContext,
+	createReadableStreamFromReadable,
+} from "@remix-run/node";
 import { RemixServer } from "@remix-run/react";
+
 import { isbot } from "isbot";
+import { type ComponentProps } from "react";
 import { renderToPipeableStream } from "react-dom/server";
 import { getEnv, validateEnv } from "./utils/env.server";
+
+type EntryContext = ComponentProps<typeof RemixServer>["context"];
 
 const ABORT_DELAY = 5_000;
 
