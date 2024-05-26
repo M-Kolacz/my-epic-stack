@@ -1,7 +1,11 @@
 import { json } from "@remix-run/node";
 import { requireUserId } from "./auth.server";
 import { prisma } from "./db.server";
-import { type PermissionString, type Role, parsePermissionString } from "./user";
+import {
+	type PermissionString,
+	type Role,
+	parsePermissionString,
+} from "./user";
 
 export const requireUserWithPermission = async (
 	request: Request,
